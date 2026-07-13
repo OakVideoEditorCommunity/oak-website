@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: oak
+      POSTGRES_PASSWORD: oak
+      POSTGRES_DB: oak_website
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oak -d oak_website"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  docs-builder:
+    build: ./docs-builder
+    volumes:
+      - ./../oak-docs:/data/oak-docs:ro
+      - docs-html:/data/docs-html
+    environment:
+      DOCS_SRC_DIR: /data/oak-docs
+      DOCS_OUT_DIR: /data/docs-html
+    command: ["build-docs"]
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      APP__DATABASE__URL: postgres://oak:oak@db/oak_website
+      APP__SERVER__HOST: 0.0.0.0
+      APP__SERVER__PORT: 8080
+      APP__DOCS__HTML_DIR: /data/docs-html
+    volumes:
+      - docs-html:/data/docs-html:ro
+    ports:
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      docs-builder:
+        condition: service_completed_successfully
+
+  frontend:
+    build: ./frontend
+    env_file:
+      - .env
+    environment:
+      NUXT_API_BASE_URL: http://backend:8080
+      NUXT_PUBLIC_API_BASE_URL: http://localhost:8081
+      NUXT_PUBLIC_SITE_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  docs-html:

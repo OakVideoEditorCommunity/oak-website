@@ -1,0 +1,5 @@
+[tarpaulin]
+exclude-files = ["migration/*"]
+out = ["Html", "Json", "Xml"]
+output-dir = "coverage"
+run-types = ["Tests"]

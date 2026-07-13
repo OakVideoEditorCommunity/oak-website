@@ -1,0 +1,29 @@
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*
+!.env.example
+
+# Backend
+/backend/target
+
+# Frontend
+/frontend/.output
+/frontend/.data
+/frontend/.nuxt
+/frontend/.nitro
+/frontend/.cache
+/frontend/dist
+/frontend/node_modules
+
+# Coverage reports
+coverage/
+*.profraw
+tarpaulin-report.*
+
+# IDE / OS
+.DS_Store
+.idea
+.vscode
+*.swp
+*.swo

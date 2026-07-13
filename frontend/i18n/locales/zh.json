@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "home": "首页",
+    "download": "下载",
+    "docs": "文档"
+  },
+  "download": {
+    "now": "立即下载",
+    "title": "下载 Oak Video Editor",
+    "subtitle": "获取适用于 Windows、macOS 与 Linux 的免费非线性视频编辑器。",
+    "latest": "最新版本",
+    "previous": "历史版本",
+    "download": "下载",
+    "preparing": "准备下载…",
+    "releaseNotes": "发布说明",
+    "noAssets": "暂无可下载版本，请稍后重试或联系管理员。"
+  },
+  "platform": {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "unknown": "其他"
+  },
+  "docs": {
+    "title": "文档",
+    "subtitle": "学习如何使用 Oak Video Editor。",
+    "index": "目录",
+    "notFound": "文档未找到"
+  },
+  "hero": {
+    "title": "Oak Video Editor",
+    "subtitle": "免费、开源、跨平台的非线性视频编辑器。由专业社区维护，面向 Windows、macOS 与 Linux。",
+    "download": "免费下载",
+    "docs": "阅读文档",
+    "platforms": "支持 Windows · macOS · Linux"
+  },
+  "features": {
+    "title": "核心特性",
+    "subtitle": "为创作者打造的视频编辑工具",
+    "nonlinear": {
+      "title": "非线性编辑",
+      "desc": "强大的时间线与多轨道编辑，支持剪辑、合成与精细调整。"
+    },
+    "color": {
+      "title": "调色与示波器",
+      "desc": "LUT、直方图、波形图等专业调色工具。"
+    },
+    "openfx": {
+      "title": "OpenFX 插件",
+      "desc": "可加载 OpenFX 插件，扩展创意可能性。"
+    }
+  },
+  "cta": {
+    "title": "准备好开始了吗？",
+    "subtitle": "加入社区，下载 Oak Video Editor 体验 alpha 版本。",
+    "button": "前往下载页面"
+  },
+  "footer": {
+    "tagline": "社区维护的免费视频编辑器。",
+    "links": "链接",
+    "community": "社区"
+  },
+  "loading": "加载中…",
+  "releases": {
+    "notFound": "版本未找到"
+  },
+  "seo": {
+    "defaultDescription": "Oak Video Editor 是一款免费、开源、跨平台的非线性视频编辑器，支持 Windows、macOS 与 Linux。",
+    "homeTitle": "免费开源视频编辑器",
+    "downloadTitle": "下载",
+    "downloadDescription": "下载 Oak Video Editor 的最新版本，支持 Windows、macOS 与 Linux。",
+    "docsTitle": "文档",
+    "docsDescription": "Oak Video Editor 用户手册与文档。"
+  }
+}

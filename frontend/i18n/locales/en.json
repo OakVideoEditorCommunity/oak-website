@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "home": "Home",
+    "download": "Download",
+    "docs": "Docs"
+  },
+  "download": {
+    "now": "Download Now",
+    "title": "Download Oak Video Editor",
+    "subtitle": "Get the free non-linear video editor for Windows, macOS, and Linux.",
+    "latest": "Latest Release",
+    "previous": "Previous Releases",
+    "download": "Download",
+    "preparing": "Preparing download…",
+    "releaseNotes": "Release Notes",
+    "noAssets": "No downloadable versions are available right now. Please check back later or contact the admin."
+  },
+  "platform": {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "unknown": "Other"
+  },
+  "docs": {
+    "title": "Documentation",
+    "subtitle": "Learn how to use Oak Video Editor.",
+    "index": "Index",
+    "notFound": "Document not found"
+  },
+  "hero": {
+    "title": "Oak Video Editor",
+    "subtitle": "A free, open-source, cross-platform non-linear video editor. Community-maintained for Windows, macOS, and Linux.",
+    "download": "Free Download",
+    "docs": "Read the Docs",
+    "platforms": "Available for Windows · macOS · Linux"
+  },
+  "features": {
+    "title": "Core Features",
+    "subtitle": "Video editing tools built for creators",
+    "nonlinear": {
+      "title": "Non-linear Editing",
+      "desc": "Powerful timeline and multi-track editing with cuts, compositing, and fine adjustments."
+    },
+    "color": {
+      "title": "Color Grading & Scopes",
+      "desc": "Professional color tools including LUTs, histograms, and waveform monitors."
+    },
+    "openfx": {
+      "title": "OpenFX Plugins",
+      "desc": "Load OpenFX plugins to extend your creative possibilities."
+    }
+  },
+  "cta": {
+    "title": "Ready to start?",
+    "subtitle": "Join the community and try the Oak Video Editor alpha.",
+    "button": "Go to Download"
+  },
+  "footer": {
+    "tagline": "A community-maintained free video editor.",
+    "links": "Links",
+    "community": "Community"
+  },
+  "loading": "Loading…",
+  "releases": {
+    "notFound": "Release not found"
+  },
+  "seo": {
+    "defaultDescription": "Oak Video Editor is a free, open-source, cross-platform non-linear video editor for Windows, macOS, and Linux.",
+    "homeTitle": "Free Open Source Video Editor",
+    "downloadTitle": "Download",
+    "downloadDescription": "Download the latest version of Oak Video Editor for Windows, macOS, and Linux.",
+    "docsTitle": "Documentation",
+    "docsDescription": "Oak Video Editor user manual and documentation."
+  }
+}
