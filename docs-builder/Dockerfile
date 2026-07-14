@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# Install git so the builder can optionally clone documentation from a remote repository.
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY requirements.txt .

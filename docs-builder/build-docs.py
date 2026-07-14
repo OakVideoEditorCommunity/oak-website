@@ -7,6 +7,33 @@ import tempfile
 
 SRC_DIR = os.environ.get("DOCS_SRC_DIR", "/data/oak-docs")
 OUT_DIR = os.environ.get("DOCS_OUT_DIR", "/data/docs-html")
+DOCS_GIT_URL = os.environ.get("DOCS_GIT_URL", "")
+
+
+def clone_docs_repo(url: str) -> str:
+    """Clone the documentation repository into a temporary directory."""
+    tmp_dir = tempfile.mkdtemp(prefix="oak-docs-")
+    print(f"Cloning docs repository from {url} into {tmp_dir}")
+    result = subprocess.run(
+        ["git", "clone", "--depth", "1", url, tmp_dir],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(f"ERROR: failed to clone docs repo: {result.stderr}", file=sys.stderr)
+        sys.exit(1)
+    return tmp_dir
+
+
+def resolve_source_dir() -> str:
+    """Return the directory containing the documentation source.
+
+    If DOCS_GIT_URL is set, the repository is cloned from GitHub. Otherwise the
+    local DOCS_SRC_DIR is used, which is expected to be mounted by the caller.
+    """
+    if DOCS_GIT_URL:
+        return clone_docs_repo(DOCS_GIT_URL)
+    return SRC_DIR
 
 
 def copy_excluding(src: str, dst: str, exclude: set[str]) -> None:
@@ -44,21 +71,22 @@ def build_lang(src: str, out: str) -> bool:
 
 
 def main():
-    if not os.path.isdir(SRC_DIR):
-        print(f"ERROR: docs source directory {SRC_DIR} does not exist", file=sys.stderr)
+    src_dir = resolve_source_dir()
+    if not os.path.isdir(src_dir):
+        print(f"ERROR: docs source directory {src_dir} does not exist", file=sys.stderr)
         sys.exit(1)
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
     # Build Chinese docs from root, excluding the `en` subdirectory
     with tempfile.TemporaryDirectory() as tmp_zh_src:
-        copy_excluding(SRC_DIR, tmp_zh_src, {"en"})
+        copy_excluding(src_dir, tmp_zh_src, {"en"})
         ok_zh = build_lang(tmp_zh_src, os.path.join(OUT_DIR, "zh"))
 
     # Build English docs from en/; copy conf.py since en/ lacks one
     with tempfile.TemporaryDirectory() as tmp_en_src:
-        copy_excluding(os.path.join(SRC_DIR, "en"), tmp_en_src, set())
-        root_conf = os.path.join(SRC_DIR, "conf.py")
+        copy_excluding(os.path.join(src_dir, "en"), tmp_en_src, set())
+        root_conf = os.path.join(src_dir, "conf.py")
         if os.path.isfile(root_conf):
             shutil.copy2(root_conf, os.path.join(tmp_en_src, "conf.py"))
             # Patch language to English
