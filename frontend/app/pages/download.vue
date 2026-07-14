@@ -39,7 +39,7 @@
 
           <div v-if="latest.release_notes" class="mt-8 prose max-w-none">
             <h3 class="text-lg font-semibold mb-2">{{ $t('download.releaseNotes') }}</h3>
-            <pre class="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg">{{ latest.release_notes }}</pre>
+            <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg" v-html="renderedReleaseNotes" />
           </div>
         </div>
       </div>
@@ -71,6 +71,7 @@ const { data: allReleases, pending } = await useAsyncData<Release[]>('releases',
 
 const latest = computed(() => allReleases.value?.[0] || null)
 const latestReadyAssets = computed(() => latest.value?.assets.filter(a => a.sync_status === 'ready') || [])
+const renderedReleaseNotes = computed(() => latest.value?.release_notes ? renderMarkdown(latest.value.release_notes) : '')
 
 function platformLabel(platform: string) {
   const labels: Record<string, string> = {
