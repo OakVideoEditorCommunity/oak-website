@@ -2,7 +2,7 @@
   <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <NuxtLink :to="localePath('/' as any)" class="flex items-center gap-2 font-bold text-xl text-emerald-700">
-        <img src="/favicon.ico" alt="Oak" class="w-8 h-8" />
+        <img src="/Oak_Icon.svg" alt="Oak" class="w-8 h-8" />
         Oak Video Editor
       </NuxtLink>
 
