@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 import shutil
 import subprocess
@@ -50,7 +51,49 @@ def copy_tree(src: str, dst: str, exclude: set[str]) -> None:
             shutil.copy2(s, d)
 
 
-def build_lang(src: str, out: str) -> bool:
+def read_toctree(index_rst: str) -> list[str]:
+    """Read the toctree entries from an index.rst file.
+
+    Returns the ordered list of document slugs as they appear in the toctree.
+    Entries must be indented lines below the ``.. toctree::`` directive. Blank
+    lines and option lines (e.g. ``:maxdepth: 2``) are skipped, and the block
+    ends when a non-indented line or a new directive is reached.
+    """
+    if not os.path.isfile(index_rst):
+        return []
+
+    entries: list[str] = []
+    in_toctree = False
+    with open(index_rst, "r", encoding="utf-8") as f:
+        for line in f:
+            stripped = line.strip()
+            if not in_toctree:
+                if stripped.startswith(".. toctree::"):
+                    in_toctree = True
+                continue
+
+            # End the block on a new top-level directive or a non-indented line.
+            if stripped.startswith(".. ") or (stripped and not line[0].isspace()):
+                break
+            if not stripped or stripped.startswith(":"):
+                continue
+
+            # Document entries are indented; strip any .rst suffix.
+            entry = stripped.removesuffix(".rst")
+            if entry:
+                entries.append(entry)
+    return entries
+
+
+def write_toc_json(out_dir: str, index_rst: str) -> None:
+    """Write a toc.json file with the order defined by the index toctree."""
+    toc = read_toctree(index_rst)
+    if toc:
+        with open(os.path.join(out_dir, "toc.json"), "w", encoding="utf-8") as f:
+            json.dump(toc, f, ensure_ascii=False, indent=2)
+
+
+def build_lang(src: str, out: str, index_rst: str, extra_sphinx_args: list[str] | None = None) -> bool:
     """Build Sphinx docs for a single language directory."""
     if not os.path.isdir(src):
         print(f"Source dir {src} does not exist, skipping")
@@ -63,10 +106,14 @@ def build_lang(src: str, out: str) -> bool:
         sys.executable, "-m", "sphinx",
         "-b", "html",
         "--keep-going",
-        src, out,
     ]
+    if extra_sphinx_args:
+        cmd.extend(extra_sphinx_args)
+    cmd.extend([src, out])
     print(f"Building docs: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=src)
+    if result.returncode == 0:
+        write_toc_json(out, index_rst)
     return result.returncode == 0
 
 
@@ -91,8 +138,11 @@ def main():
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    # Build English docs from the repository root.
-    ok_en = build_lang(src_dir, os.path.join(OUT_DIR, "en"))
+    with tempfile.TemporaryDirectory() as tmp_en_src:
+        # Build English docs from the repository root, excluding the Chinese source tree.
+        copy_tree(src_dir, tmp_en_src, {"zh"})
+        en_index = os.path.join(src_dir, "index.rst")
+        ok_en = build_lang(tmp_en_src, os.path.join(OUT_DIR, "en"), en_index)
 
     # Build Chinese docs from zh/; copy the root conf.py since zh/ lacks one.
     with tempfile.TemporaryDirectory() as tmp_zh_src:
@@ -102,7 +152,8 @@ def main():
         if os.path.isfile(root_conf):
             shutil.copy2(root_conf, os.path.join(tmp_zh_src, "conf.py"))
             patch_language(os.path.join(tmp_zh_src, "conf.py"), "zh_CN")
-        ok_zh = build_lang(tmp_zh_src, os.path.join(OUT_DIR, "zh"))
+        zh_index = os.path.join(zh_src, "index.rst")
+        ok_zh = build_lang(tmp_zh_src, os.path.join(OUT_DIR, "zh"), zh_index)
 
     if not ok_en and not ok_zh:
         sys.exit(1)

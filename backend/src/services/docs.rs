@@ -44,6 +44,7 @@ impl DocsIndex {
             }
             let mut summaries = Vec::new();
             Self::collect_html_files(&lang_dir, &lang_dir, lang, &mut pages, &mut summaries)?;
+            Self::sort_by_toc(&lang_dir, &mut summaries);
             toc.insert(lang.to_string(), summaries);
         }
 
@@ -51,6 +52,43 @@ impl DocsIndex {
             pages: Mutex::new(pages),
             toc: Mutex::new(toc),
         })
+    }
+
+    /// Sorts summaries according to the language-specific toc.json if present.
+    fn sort_by_toc(lang_dir: &Path, summaries: &mut Vec<DocPageSummary>) {
+        let toc_path = lang_dir.join("toc.json");
+        if !toc_path.exists() {
+            return;
+        }
+
+        let raw = match fs::read_to_string(&toc_path) {
+            Ok(raw) => raw,
+            Err(e) => {
+                tracing::warn!("failed to read {}: {}", toc_path.display(), e);
+                return;
+            }
+        };
+
+        let toc: Vec<String> = match serde_json::from_str(&raw) {
+            Ok(toc) => toc,
+            Err(e) => {
+                tracing::warn!("failed to parse {}: {}", toc_path.display(), e);
+                return;
+            }
+        };
+
+        let mut ordered = Vec::with_capacity(summaries.len());
+        for slug in toc {
+            if let Some(pos) = summaries.iter().position(|s| s.slug == slug) {
+                ordered.push(summaries.remove(pos));
+            } else {
+                tracing::debug!("toc entry '{}' not found in built docs", slug);
+            }
+        }
+        // Append any remaining pages in alphabetical order.
+        summaries.sort_by(|a, b| a.slug.cmp(&b.slug));
+        ordered.append(summaries);
+        *summaries = ordered;
     }
 
     fn collect_html_files(
@@ -289,5 +327,39 @@ mod tests {
         assert!(en.iter().any(|p| p.slug == "guide/intro"));
         let langs = index.languages();
         assert!(langs.contains(&"en".to_string()));
+    }
+
+    #[test]
+    fn sorts_docs_by_toctree_and_appends_unknown_alphabetically() {
+        let tmp = tempfile::tempdir().unwrap();
+        let en_dir = tmp.path().join("en");
+        fs::create_dir_all(&en_dir).unwrap();
+        create_test_doc(&en_dir, "basic", "Basic");
+        create_test_doc(&en_dir, "quick_start", "Quick Start");
+        create_test_doc(&en_dir, "advanced", "Advanced");
+        fs::write(
+            en_dir.join("toc.json"),
+            r#"["quick_start", "basic"]"#,
+        )
+        .unwrap();
+
+        let index = DocsIndex::load(tmp.path().to_str().unwrap()).unwrap();
+        let en = index.list("en");
+        let slugs: Vec<_> = en.iter().map(|p| p.slug.as_str()).collect();
+        assert_eq!(slugs, vec!["quick_start", "basic", "advanced"]);
+    }
+
+    #[test]
+    fn falls_back_to_alphabetical_when_toc_json_is_missing() {
+        let tmp = tempfile::tempdir().unwrap();
+        let zh_dir = tmp.path().join("zh");
+        fs::create_dir_all(&zh_dir).unwrap();
+        create_test_doc(&zh_dir, "zzz", "Zzz");
+        create_test_doc(&zh_dir, "aaa", "Aaa");
+
+        let index = DocsIndex::load(tmp.path().to_str().unwrap()).unwrap();
+        let zh = index.list("zh");
+        let slugs: Vec<_> = zh.iter().map(|p| p.slug.as_str()).collect();
+        assert_eq!(slugs, vec!["aaa", "zzz"]);
     }
 }
