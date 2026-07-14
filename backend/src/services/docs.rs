@@ -362,4 +362,87 @@ mod tests {
         let slugs: Vec<_> = zh.iter().map(|p| p.slug.as_str()).collect();
         assert_eq!(slugs, vec!["aaa", "zzz"]);
     }
+
+    fn run_git(args: &[&str], cwd: &Path) {
+        let status = std::process::Command::new("git")
+            .args(args)
+            .current_dir(cwd)
+            .status()
+            .expect("git should be installed");
+        assert!(status.success(), "git {:?} failed", args);
+    }
+
+    fn init_local_docs_repo() -> (tempfile::TempDir, String) {
+        let tmp = tempfile::tempdir().unwrap();
+        run_git(&["init"], tmp.path());
+        run_git(&["config", "user.email", "test@example.com"], tmp.path());
+        run_git(&["config", "user.name", "Test"], tmp.path());
+
+        // Create the default branch with a dummy file so we can create gh-pages.
+        fs::write(tmp.path().join("README.md"), "docs").unwrap();
+        run_git(&["add", "README.md"], tmp.path());
+        run_git(&["commit", "-m", "init"], tmp.path());
+
+        // Build the gh-pages branch content.
+        let pages = tmp.path().join("pages");
+        let en_dir = pages.join("en");
+        let zh_dir = pages.join("zh");
+        fs::create_dir_all(&en_dir).unwrap();
+        fs::create_dir_all(&zh_dir).unwrap();
+        create_test_doc(&en_dir, "intro", "Intro");
+        create_test_doc(&zh_dir, "start", "Start");
+        fs::write(en_dir.join("toc.json"), r#"["intro"]"#).unwrap();
+
+        run_git(&["checkout", "-b", "gh-pages"], tmp.path());
+        // Move the built docs to the branch root and remove the default branch files.
+        for entry in fs::read_dir(&pages).unwrap() {
+            let entry = entry.unwrap();
+            std::fs::rename(entry.path(), tmp.path().join(entry.file_name())).unwrap();
+        }
+        fs::remove_dir_all(&pages).unwrap();
+        fs::remove_file(tmp.path().join("README.md")).unwrap();
+        run_git(&["add", "."], tmp.path());
+        run_git(&["commit", "-m", "docs"], tmp.path());
+
+        let path = tmp.path().to_str().unwrap().to_string();
+        (tmp, path)
+    }
+
+    #[tokio::test]
+    async fn pull_docs_from_git_clones_and_reloads_index() {
+        let (_repo, url) = init_local_docs_repo();
+        let html_dir = tempfile::tempdir().unwrap();
+        let index = std::sync::Arc::new(std::sync::RwLock::new(DocsIndex::default()));
+
+        pull_docs_from_git(&url, html_dir.path().to_str().unwrap(), &index)
+            .await
+            .expect("pull should succeed");
+
+        let docs = index.read().unwrap();
+        let en = docs.list("en");
+        assert!(en.iter().any(|p| p.slug == "intro"));
+        let zh = docs.list("zh");
+        assert!(zh.iter().any(|p| p.slug == "start"));
+    }
+
+    #[tokio::test]
+    async fn pull_docs_from_git_fails_for_missing_branch() {
+        let tmp = tempfile::tempdir().unwrap();
+        run_git(&["init"], tmp.path());
+        run_git(&["config", "user.email", "test@example.com"], tmp.path());
+        run_git(&["config", "user.name", "Test"], tmp.path());
+        fs::write(tmp.path().join("README.md"), "x").unwrap();
+        run_git(&["add", "README.md"], tmp.path());
+        run_git(&["commit", "-m", "init"], tmp.path());
+
+        let html_dir = tempfile::tempdir().unwrap();
+        let index = std::sync::Arc::new(std::sync::RwLock::new(DocsIndex::default()));
+        let result = pull_docs_from_git(
+            tmp.path().to_str().unwrap(),
+            html_dir.path().to_str().unwrap(),
+            &index,
+        )
+        .await;
+        assert!(result.is_err());
+    }
 }
