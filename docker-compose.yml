@@ -65,7 +65,7 @@ services:
   # We use the actively maintained containrrr/watchtower image; the original v2tec/watchtower
   # fork is no longer updated.
   watchtower:
-    image: containrrr/watchtower:latest
+    image: nickfedor/watchtower:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
