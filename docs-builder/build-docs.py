@@ -36,7 +36,7 @@ def resolve_source_dir() -> str:
     return SRC_DIR
 
 
-def copy_excluding(src: str, dst: str, exclude: set[str]) -> None:
+def copy_tree(src: str, dst: str, exclude: set[str]) -> None:
     """Copy src tree to dst, excluding top-level items in `exclude`."""
     os.makedirs(dst, exist_ok=True)
     for item in os.listdir(src):
@@ -70,6 +70,19 @@ def build_lang(src: str, out: str) -> bool:
     return result.returncode == 0
 
 
+def patch_language(conf_path: str, language: str) -> None:
+    """Replace the language setting in a copied conf.py."""
+    if not os.path.isfile(conf_path):
+        return
+    with open(conf_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    # Replace either the English or the old Chinese default.
+    content = content.replace("language = 'en'", f"language = '{language}'")
+    content = content.replace("language = 'zh_CN'", f"language = '{language}'")
+    with open(conf_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
 def main():
     src_dir = resolve_source_dir()
     if not os.path.isdir(src_dir):
@@ -78,27 +91,20 @@ def main():
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    # Build Chinese docs from root, excluding the `en` subdirectory
-    with tempfile.TemporaryDirectory() as tmp_zh_src:
-        copy_excluding(src_dir, tmp_zh_src, {"en"})
-        ok_zh = build_lang(tmp_zh_src, os.path.join(OUT_DIR, "zh"))
+    # Build English docs from the repository root.
+    ok_en = build_lang(src_dir, os.path.join(OUT_DIR, "en"))
 
-    # Build English docs from en/; copy conf.py since en/ lacks one
-    with tempfile.TemporaryDirectory() as tmp_en_src:
-        copy_excluding(os.path.join(src_dir, "en"), tmp_en_src, set())
+    # Build Chinese docs from zh/; copy the root conf.py since zh/ lacks one.
+    with tempfile.TemporaryDirectory() as tmp_zh_src:
+        zh_src = os.path.join(src_dir, "zh")
+        copy_tree(zh_src, tmp_zh_src, set())
         root_conf = os.path.join(src_dir, "conf.py")
         if os.path.isfile(root_conf):
-            shutil.copy2(root_conf, os.path.join(tmp_en_src, "conf.py"))
-            # Patch language to English
-            conf_path = os.path.join(tmp_en_src, "conf.py")
-            with open(conf_path, "r", encoding="utf-8") as f:
-                content = f.read()
-            content = content.replace("language = 'zh_CN'", "language = 'en'")
-            with open(conf_path, "w", encoding="utf-8") as f:
-                f.write(content)
-        ok_en = build_lang(tmp_en_src, os.path.join(OUT_DIR, "en"))
+            shutil.copy2(root_conf, os.path.join(tmp_zh_src, "conf.py"))
+            patch_language(os.path.join(tmp_zh_src, "conf.py"), "zh_CN")
+        ok_zh = build_lang(tmp_zh_src, os.path.join(OUT_DIR, "zh"))
 
-    if not ok_zh and not ok_en:
+    if not ok_en and not ok_zh:
         sys.exit(1)
 
     print(f"Docs built successfully into {OUT_DIR}")

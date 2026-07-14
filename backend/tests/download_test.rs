@@ -75,6 +75,8 @@ fn test_config(endpoint_url: String) -> AppConfig {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     }
 }

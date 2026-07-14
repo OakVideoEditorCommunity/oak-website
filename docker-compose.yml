@@ -32,6 +32,8 @@ services:
       APP__SERVER__HOST: 0.0.0.0
       APP__SERVER__PORT: 8080
       APP__DOCS__HTML_DIR: /data/docs-html
+      APP__DOCS__GIT_URL: https://github.com/OakVideoEditorCommunity/oak-docs.git
+      APP__DOCS__UPDATE_INTERVAL_HOURS: 24
     volumes:
       - docs-html:/data/docs-html:ro
     ports:

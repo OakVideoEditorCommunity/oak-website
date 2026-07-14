@@ -44,6 +44,8 @@ async fn sync_endpoint_requires_authentication() {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 
@@ -134,6 +136,8 @@ async fn sync_endpoint_syncs_release_and_asset() {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 
@@ -217,6 +221,8 @@ async fn sync_endpoint_filters_by_tag() {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 
@@ -311,6 +317,8 @@ async fn sync_endpoint_is_idempotent() {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 
@@ -408,6 +416,8 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
         },
         docs: DocsConfig {
             html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 

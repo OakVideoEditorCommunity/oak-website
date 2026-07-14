@@ -57,6 +57,8 @@ pub async fn build_test_app(db: DatabaseConnection) -> axum::Router {
                 .to_str()
                 .unwrap_or("/tmp")
                 .to_string(),
+            git_url: None,
+            update_interval_hours: 24,
         },
     };
 
@@ -95,7 +97,7 @@ pub async fn build_test_app_with_docs(db: DatabaseConnection, html_dir: String) 
         admin: AdminConfig {
             token: "test-token".to_string(),
         },
-        docs: DocsConfig { html_dir },
+        docs: DocsConfig { html_dir, git_url: None, update_interval_hours: 24 },
     };
 
     let s3 = create_s3_client(&config.r2).expect("failed to create s3 client");

@@ -42,9 +42,10 @@ pub fn create_app(state: AppState) -> Router {
 
 /// Bootstraps the database, S3 client, docs index, and application router.
 ///
-/// Returns the router and the socket address it should bind to. The caller is
-/// responsible for creating the TCP listener and serving the app.
-pub async fn bootstrap(config: AppConfig) -> anyhow::Result<(Router, SocketAddr)> {
+/// Returns the router, the socket address it should bind to, and the shared
+/// application state. The caller is responsible for creating the TCP listener
+/// and serving the app.
+pub async fn bootstrap(config: AppConfig) -> anyhow::Result<(Router, SocketAddr, AppState)> {
     let db = connect(&config.database).await?;
     crate::migration::Migrator::up(&db, None).await?;
 
@@ -52,13 +53,13 @@ pub async fn bootstrap(config: AppConfig) -> anyhow::Result<(Router, SocketAddr)
     let docs = DocsIndex::load(&config.docs.html_dir)?;
 
     let state = AppState::new(config.clone(), db, s3, docs);
-    let app = create_app(state);
+    let app = create_app(state.clone());
 
     let addr: SocketAddr = format!("{}:{}", config.server.host, config.server.port)
         .parse()
         .map_err(|e| anyhow::anyhow!("invalid server address: {}", e))?;
 
-    Ok((app, addr))
+    Ok((app, addr, state))
 }
 
 #[cfg(test)]
@@ -96,6 +97,8 @@ mod tests {
             },
             docs: DocsConfig {
                 html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+                git_url: None,
+                update_interval_hours: 24,
             },
         }
     }
@@ -103,7 +106,7 @@ mod tests {
     #[tokio::test]
     async fn bootstrap_creates_app_and_address() {
         let config = test_config();
-        let (app, addr) = bootstrap(config).await.expect("bootstrap should succeed");
+        let (app, addr, _state) = bootstrap(config).await.expect("bootstrap should succeed");
         assert_eq!(addr.ip().to_string(), "127.0.0.1");
         // The returned router should have at least the health route configured.
         // We cannot easily query routes, so just ensure it was built.

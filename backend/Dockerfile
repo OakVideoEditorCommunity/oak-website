@@ -17,7 +17,7 @@ RUN touch src/main.rs \
 # Runtime stage
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y ca-certificates libssl3 \
+RUN apt-get update && apt-get install -y ca-certificates libssl3 git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

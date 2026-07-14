@@ -137,6 +137,90 @@ impl DocsIndex {
             .map(|toc| toc.keys().cloned().collect())
             .unwrap_or_default()
     }
+
+    /// Replaces the index contents by rescanning the given HTML directory.
+    pub fn reload(&self, html_dir: &str) -> AppResult<()> {
+        let new = Self::load(html_dir)?;
+        let mut pages = self.pages.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+        let mut toc = self.toc.lock().map_err(|e| AppError::Internal(e.to_string()))?;
+        *pages = new.pages.into_inner().map_err(|e| AppError::Internal(e.to_string()))?;
+        *toc = new.toc.into_inner().map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(())
+    }
+}
+
+/// Recursively copies a directory tree from `src` to `dst`.
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> AppResult<()> {
+    fs::create_dir_all(&dst).map_err(|e| AppError::Internal(e.to_string()))?;
+    for entry in fs::read_dir(src).map_err(|e| AppError::Internal(e.to_string()))? {
+        let entry = entry.map_err(|e| AppError::Internal(e.to_string()))?;
+        let path = entry.path();
+        let dest = dst.as_ref().join(entry.file_name());
+        if path.is_dir() {
+            copy_dir_all(&path, &dest)?;
+        } else {
+            fs::copy(&path, &dest).map_err(|e| AppError::Internal(e.to_string()))?;
+        }
+    }
+    Ok(())
+}
+
+/// Pulls pre-built documentation from a remote Git repository and reloads the index.
+///
+/// This function expects the remote repository to have a `gh-pages` branch whose root
+/// contains `en/` and `zh/` directories with the built Sphinx HTML output.
+pub async fn pull_docs_from_git(
+    git_url: &str,
+    html_dir: &str,
+    index: &std::sync::RwLock<DocsIndex>,
+) -> AppResult<()> {
+    let tmp_dir = tempfile::tempdir().map_err(|e| AppError::Internal(e.to_string()))?;
+    let tmp_path = tmp_dir.path().to_path_buf();
+
+    tracing::info!("pulling docs from {}", git_url);
+    let output = tokio::process::Command::new("git")
+        .args([
+            "clone",
+            "--depth",
+            "1",
+            "--branch",
+            "gh-pages",
+            git_url,
+            tmp_path.to_string_lossy().as_ref(),
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .output()
+        .await
+        .map_err(|e| AppError::Internal(format!("failed to run git: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(AppError::External(format!("git clone failed: {}", stderr)));
+    }
+
+    fs::create_dir_all(html_dir).map_err(|e| AppError::Internal(e.to_string()))?;
+
+    for lang in ["en", "zh"] {
+        let src = tmp_path.join(lang);
+        if src.exists() {
+            let dst = Path::new(html_dir).join(lang);
+            if dst.exists() {
+                fs::remove_dir_all(&dst).map_err(|e| AppError::Internal(e.to_string()))?;
+            }
+            copy_dir_all(&src, &dst)?;
+            tracing::info!("updated docs language '{}'", lang);
+        } else {
+            tracing::warn!("docs language '{}' not found in remote", lang);
+        }
+    }
+
+    let docs = index.write().map_err(|e| AppError::Internal(e.to_string()))?;
+    docs.reload(html_dir)?;
+    drop(docs);
+
+    tracing::info!("docs index reloaded successfully");
+    Ok(())
 }
 
 #[cfg(test)]

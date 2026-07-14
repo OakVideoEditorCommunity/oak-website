@@ -60,10 +60,21 @@ pub struct AdminConfig {
 }
 
 /// Static documentation settings.
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct DocsConfig {
     /// Directory containing pre-built Sphinx HTML docs.
     pub html_dir: String,
+    /// Optional Git URL of the documentation repository. When set, the backend
+    /// will periodically clone the docs and rebuild the local index.
+    #[serde(default)]
+    pub git_url: Option<String>,
+    /// How often (in hours) to pull docs from GitHub. Defaults to 24.
+    #[serde(default = "default_docs_update_interval_hours")]
+    pub update_interval_hours: u64,
+}
+
+fn default_docs_update_interval_hours() -> u64 {
+    24
 }
 
 /// Top-level application configuration.

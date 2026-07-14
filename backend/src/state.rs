@@ -1,6 +1,6 @@
 use aws_sdk_s3::Client as S3Client;
 use sea_orm::DatabaseConnection;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use crate::config::AppConfig;
 use crate::services::docs::DocsIndex;
@@ -11,7 +11,9 @@ pub struct AppState {
     pub config: Arc<AppConfig>,
     pub db: DatabaseConnection,
     pub s3: S3Client,
-    pub docs: Arc<DocsIndex>,
+    /// The docs index is protected by a read-write lock so it can be reloaded
+    /// in the background when the documentation is updated.
+    pub docs: Arc<RwLock<DocsIndex>>,
 }
 
 impl AppState {
@@ -21,7 +23,7 @@ impl AppState {
             config: Arc::new(config),
             db,
             s3,
-            docs: Arc::new(docs),
+            docs: Arc::new(RwLock::new(docs)),
         }
     }
 }

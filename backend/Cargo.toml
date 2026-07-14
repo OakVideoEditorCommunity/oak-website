@@ -30,6 +30,7 @@ html-escape = "0.2"
 futures = "0.3"
 bytes = "1.5"
 sea-orm-migration = "1.1"
+tempfile = "3.10"
 
 [dependencies.migration]
 path = "./migration"
