@@ -1,13 +1,13 @@
 use std::net::SocketAddr;
 
 use axum::{
-    http::{header, HeaderValue, Method},
+    http::{header, Method},
     Router,
 };
 use sea_orm_migration::migrator::MigratorTrait;
 use tower_http::{
     compression::CompressionLayer,
-    cors::CorsLayer,
+    cors::{AllowOrigin, CorsLayer},
     trace::{DefaultMakeSpan, TraceLayer},
 };
 
@@ -21,11 +21,11 @@ use crate::{
 
 /// Builds the full Axum application including API routes and middleware layers.
 pub fn create_app(state: AppState) -> Router {
+    // Mirror the request Origin header instead of hard-coding origins. This makes
+    // local development (different ports) and arbitrary production frontends work
+    // without redeploying the backend, while still requiring a cross-origin request.
     let cors = CorsLayer::new()
-        .allow_origin([
-            "http://localhost:3000".parse::<HeaderValue>().unwrap(),
-            "http://localhost:8080".parse::<HeaderValue>().unwrap(),
-        ])
+        .allow_origin(AllowOrigin::mirror_request())
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, header::ACCEPT]);
 
