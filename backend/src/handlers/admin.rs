@@ -8,7 +8,7 @@ use crate::{
     entities::{release_assets, releases},
     error::{AppError, AppResult},
     models::{SyncReleaseRequest, SyncResponse},
-    services::{github::infer_platform_arch, GithubClient, R2Service},
+    services::{github::{infer_platform_arch, is_debug_package}, GithubClient, R2Service},
     state::AppState,
 };
 
@@ -52,6 +52,11 @@ pub async fn sync_releases(
         };
 
         for asset in gh.assets {
+            // Skip debug symbol packages; they are not end-user downloads.
+            if is_debug_package(&asset.name) {
+                continue;
+            }
+
             let existing_asset = release_assets::Entity::find()
                 .filter(release_assets::Column::ReleaseId.eq(release_id))
                 .filter(release_assets::Column::Filename.eq(&asset.name))

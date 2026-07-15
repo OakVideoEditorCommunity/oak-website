@@ -129,6 +129,13 @@ pub fn infer_platform_arch(filename: &str) -> (String, Option<String>) {
     (platform.to_string(), arch)
 }
 
+/// Returns true for debug symbol packages that should not be distributed,
+/// e.g. Arch `-debug-<ver>.pkg.tar.zst` files published alongside releases.
+pub fn is_debug_package(filename: &str) -> bool {
+    let lower = filename.to_lowercase();
+    lower.contains("-debug-") || lower.ends_with(".debug") || lower.contains(".symbols.")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -296,6 +303,30 @@ mod tests {
         let (platform, arch) = infer_platform_arch("README.md");
         assert_eq!(platform, "unknown");
         assert_eq!(arch, None);
+    }
+
+    #[test]
+    fn detects_arch_debug_package() {
+        // Real asset name from the oak v0.4.0-alpha release.
+        assert!(is_debug_package(
+            "oak-video-editor-debug-0.4.0_alpha-1-x86_64.pkg.tar.zst"
+        ));
+    }
+
+    #[test]
+    fn detects_symbol_and_debug_suffix_packages() {
+        assert!(is_debug_package("oak-0.1.0.symbols.tar.zst"));
+        assert!(is_debug_package("oak-0.1.0.debug"));
+    }
+
+    #[test]
+    fn keeps_regular_packages() {
+        assert!(!is_debug_package("oak-video-editor-0.4.0_alpha-1-x86_64.pkg.tar.zst"));
+        assert!(!is_debug_package("Oak_Video_Editor-x86_64.AppImage"));
+        assert!(!is_debug_package("oak-video-editor_0.4.0-alpha_amd64.deb"));
+        assert!(!is_debug_package("oak-video-editor-0.4.0-alpha-Linux.rpm"));
+        assert!(!is_debug_package("Oak-Video-Editor-macOS.dmg"));
+        assert!(!is_debug_package("Oak-Video-Editor-Windows-x64.exe"));
     }
 }
 
