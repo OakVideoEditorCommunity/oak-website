@@ -14,7 +14,8 @@ export default defineEventHandler(async (event) => {
   ]
 
   try {
-    const docs: DocsIndex = await $fetch(`${config.public.apiBaseUrl}/api/v1/docs`)
+    // Server-side fetch, so use the internal backend URL.
+    const docs: DocsIndex = await $fetch(`${config.apiBaseUrl}/api/v1/docs`)
     for (const page of docs.zh) {
       urls.push({ loc: `${baseUrl}/docs/zh/${page.slug}`, changefreq: 'monthly', priority: 0.6 })
     }

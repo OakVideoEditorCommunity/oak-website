@@ -7,7 +7,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiBaseUrl: process.env.NUXT_API_BASE_URL || 'http://backend:8080',
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8080',
+      // Empty means "same origin": the browser calls /api/... on this site's
+      // own domain and a reverse proxy (nginx) forwards it to the backend.
+      // This avoids CORS, mixed-content and Private Network Access issues.
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
       cdnDomain: process.env.NUXT_PUBLIC_CDN_DOMAIN || '',
     },
@@ -43,8 +46,11 @@ export default defineNuxtConfig({
 
   nitro: {
     routeRules: {
-      '/': { prerender: true },
-      '/download': { prerender: true },
+      // Render on demand (ISR) rather than at build time: the CI build has no
+      // backend to fetch releases/docs from, so prerendered pages would ship
+      // with empty payloads baked in.
+      '/': { isr: 3600 },
+      '/download': { isr: 3600 },
       '/docs/**': { prerender: false, isr: 3600 },
     },
     cdnURL: process.env.NUXT_PUBLIC_CDN_DOMAIN || undefined,

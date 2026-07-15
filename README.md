@@ -146,7 +146,7 @@ npm install
 npm run dev
 ```
 
-默认会代理 API 请求到 `http://localhost:8080`；可在 `.env` 中修改 `NUXT_PUBLIC_API_BASE_URL`。
+浏览器端默认使用同源相对路径请求 `/api/...`。本地开发时后端不在同源，请在 `frontend/.env` 中设置 `NUXT_PUBLIC_API_BASE_URL=http://localhost:8080`。
 
 ## 部署到生产
 

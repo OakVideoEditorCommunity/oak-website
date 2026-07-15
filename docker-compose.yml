@@ -51,9 +51,10 @@ services:
     env_file:
       - .env
     environment:
+      # Internal URL used for server-side (SSR) requests; stable compose DNS.
       NUXT_API_BASE_URL: http://backend:8080
-      NUXT_PUBLIC_API_BASE_URL: http://localhost:8081
-      NUXT_PUBLIC_SITE_URL: http://localhost:3000
+      # NUXT_PUBLIC_API_BASE_URL stays empty so the browser uses same-origin
+      # /api/... URLs; NUXT_PUBLIC_SITE_URL comes from .env.
     ports:
       - "3000:3000"
     depends_on:
