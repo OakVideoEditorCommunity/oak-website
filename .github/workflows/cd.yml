@@ -7,9 +7,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ghcr.io/oak-video-editor-community/oak-website-backend
-  FRONTEND_IMAGE: ghcr.io/oak-video-editor-community/oak-website-frontend
-  DOCS_BUILDER_IMAGE: ghcr.io/oak-video-editor-community/oak-website-docs-builder
+  BACKEND_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-backend
+  FRONTEND_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-frontend
+  DOCS_BUILDER_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-docs-builder
 
 jobs:
   build-and-push:
