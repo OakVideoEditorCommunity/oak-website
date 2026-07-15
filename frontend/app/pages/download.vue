@@ -30,6 +30,7 @@
                 :release-id="latest.id"
                 :platform="asset.platform"
                 :arch="asset.arch || undefined"
+                :asset-id="asset.id"
                 class="mt-auto"
               >
                 {{ $t('download.download') }}

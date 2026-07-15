@@ -39,6 +39,10 @@ pub struct ReleaseListResponse {
 pub struct DownloadQuery {
     pub platform: Option<String>,
     pub arch: Option<String>,
+    /// Exact asset to download. Takes precedence over platform/arch matching,
+    /// which is ambiguous when one platform has multiple packages (e.g. Linux
+    /// ships deb, rpm, AppImage and pkg.tar.zst).
+    pub asset_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]

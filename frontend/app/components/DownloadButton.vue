@@ -16,21 +16,28 @@ interface Props {
   releaseId: string
   platform: string
   arch?: string
+  /** Exact asset id; preferred over platform/arch matching. */
+  assetId?: string
 }
 
 const props = defineProps<Props>()
-const { fetchApi } = useApi()
+const config = useRuntimeConfig()
 const loading = ref(false)
 
 async function handleDownload() {
   loading.value = true
   try {
-    const params = new URLSearchParams({ platform: props.platform })
-    if (props.arch) params.append('arch', props.arch)
-    const url = `/api/v1/releases/${props.releaseId}/download?${params.toString()}`
-
-    // Let the browser hit the backend download endpoint, which responds
-    // with a 302 redirect to a presigned R2 URL.
+    const params = new URLSearchParams()
+    if (props.assetId) {
+      params.append('asset_id', props.assetId)
+    } else {
+      params.append('platform', props.platform)
+      if (props.arch) params.append('arch', props.arch)
+    }
+    // Hit the backend download endpoint directly; it responds with a 302
+    // redirect to a presigned R2 URL. A plain navigation works cross-origin,
+    // so no CORS is involved.
+    const url = `${config.public.apiBaseUrl}/api/v1/releases/${props.releaseId}/download?${params.toString()}`
     window.location.href = url
   } catch (e) {
     console.error('Download failed', e)

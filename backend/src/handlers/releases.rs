@@ -91,18 +91,27 @@ pub async fn download_release(
         .all(&state.db)
         .await?;
 
-    let asset = assets
-        .into_iter()
-        .filter(|a| a.platform == platform)
-        .filter(|a| {
-            if let Some(ref wanted) = arch {
-                a.arch.as_ref() == Some(wanted)
-            } else {
-                true
-            }
-        })
-        .next()
-        .ok_or_else(|| AppError::NotFound(format!("no asset for platform {} arch {:?}", platform, arch)))?;
+    // Prefer an exact asset id when provided; platform/arch matching is only a
+    // fallback and cannot distinguish multiple packages of one platform.
+    let asset = if let Some(asset_id) = query.asset_id {
+        assets
+            .into_iter()
+            .find(|a| a.id == asset_id)
+            .ok_or_else(|| AppError::NotFound(format!("asset {} not found", asset_id)))?
+    } else {
+        assets
+            .into_iter()
+            .filter(|a| a.platform == platform)
+            .filter(|a| {
+                if let Some(ref wanted) = arch {
+                    a.arch.as_ref() == Some(wanted)
+                } else {
+                    true
+                }
+            })
+            .next()
+            .ok_or_else(|| AppError::NotFound(format!("no asset for platform {} arch {:?}", platform, arch)))?
+    };
 
     if asset.sync_status != "ready" || asset.r2_key.is_none() {
         return Err(AppError::BadRequest("asset not ready yet".to_string()));

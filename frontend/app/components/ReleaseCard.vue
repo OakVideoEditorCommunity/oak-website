@@ -24,6 +24,7 @@
           :release-id="release.id"
           :platform="asset.platform"
           :arch="asset.arch || undefined"
+          :asset-id="asset.id"
           class="w-full text-sm py-2"
         >
           {{ $t('download.download') }}

@@ -190,3 +190,80 @@ async fn download_rejects_not_ready_asset() {
 
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
+
+#[tokio::test]
+async fn download_by_asset_id_picks_exact_package() {
+    let (db, _tmp) = setup_test_db().await;
+    let (release_id, _first_asset) = insert_ready_release(&db).await;
+
+    // Insert a second asset on the same platform and arch; without asset_id
+    // the matcher could pick either one.
+    let second_id = Uuid::new_v4();
+    let second = release_assets::ActiveModel {
+        id: Set(second_id),
+        release_id: Set(release_id),
+        platform: Set("windows".to_string()),
+        arch: Set(Some("x86_64".to_string())),
+        filename: Set("oak-portable.zip".to_string()),
+        github_url: Set("https://github.com/asset2".to_string()),
+        r2_key: Set(Some(format!("releases/{}/oak-portable.zip", release_id))),
+        r2_etag: Set(Some("etag2".to_string())),
+        size_bytes: Set(Some(5678)),
+        sync_status: Set("ready".to_string()),
+        synced_at: Set(Some(chrono::Utc::now().into())),
+        created_at: Set(chrono::Utc::now().into()),
+        updated_at: Set(chrono::Utc::now().into()),
+    };
+    second.insert(&db).await.unwrap();
+
+    let config = test_config("https://r2.example.com".to_string());
+    let app = build_test_app_with_config(db, config).await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/releases/{}/download?asset_id={}",
+                    release_id, second_id
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
+    let location = response
+        .headers()
+        .get("location")
+        .expect("location header should exist")
+        .to_str()
+        .unwrap();
+    assert!(location.contains("oak-portable.zip"));
+}
+
+#[tokio::test]
+async fn download_by_unknown_asset_id_returns_404() {
+    let (db, _tmp) = setup_test_db().await;
+    let (release_id, _asset_id) = insert_ready_release(&db).await;
+    let config = test_config("https://r2.example.com".to_string());
+    let app = build_test_app_with_config(db, config).await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri(format!(
+                    "/api/v1/releases/{}/download?asset_id={}",
+                    release_id,
+                    Uuid::new_v4()
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
