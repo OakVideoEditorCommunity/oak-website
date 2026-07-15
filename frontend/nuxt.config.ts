@@ -55,6 +55,8 @@ export default defineNuxtConfig({
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       link: [
+        // Modern browsers pick the SVG logo; favicon.ico (16/32/48) is the fallback.
+        { rel: 'icon', type: 'image/svg+xml', href: '/Oak_Icon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
     },
