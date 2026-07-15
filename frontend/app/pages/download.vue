@@ -21,7 +21,10 @@
               :key="asset.id"
               class="p-4 border rounded-xl flex flex-col gap-2"
             >
-              <div class="font-semibold text-lg">{{ platformLabel(asset.platform) }}</div>
+              <div class="font-semibold text-lg">
+                {{ platformLabel(asset.platform) }}
+                <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded">{{ packageFormat(asset.filename) }}</span>
+              </div>
               <div class="text-sm text-gray-500">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
               <DownloadButton
                 :release-id="latest.id"
