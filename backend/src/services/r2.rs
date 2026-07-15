@@ -2,7 +2,7 @@ use aws_config::SdkConfig;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_credential_types::Credentials;
 use aws_sdk_s3::{
-    config::{Builder, Region},
+    config::{Builder, Region, RequestChecksumCalculation},
     presigning::PresigningConfig,
     Client as S3Client,
 };
@@ -29,6 +29,9 @@ pub fn create_s3_client(config: &R2Config) -> AppResult<S3Client> {
 
     let s3_config = Builder::from(&sdk_config)
         .force_path_style(true)
+        // Cloudflare R2 does not support the default CRC32 checksums that newer
+        // AWS SDK versions attach to PutObject; only send them when required.
+        .request_checksum_calculation(RequestChecksumCalculation::WhenRequired)
         .build();
 
     Ok(S3Client::from_conf(s3_config))
@@ -69,7 +72,7 @@ impl R2Service {
             .body(body)
             .send()
             .await
-            .map_err(|e| AppError::External(format!("R2 upload failed: {}", e)))?;
+            .map_err(|e| AppError::External(format!("R2 upload failed: {:?}", e)))?;
 
         Ok(resp.e_tag)
     }
