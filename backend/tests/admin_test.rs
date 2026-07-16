@@ -1,8 +1,9 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use sea_orm::EntityTrait;
+use sea_orm::{ActiveModelTrait, EntityTrait, Set};
 use std::time::Duration;
 use tower::ServiceExt;
+use uuid::Uuid;
 use wiremock::{
     matchers::{method, path, path_regex},
     Mock, MockServer, ResponseTemplate,
@@ -565,4 +566,147 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
         .unwrap();
     assert_eq!(assets.len(), 1);
     assert_eq!(assets[0].sync_status, "failed");
+}
+
+#[tokio::test]
+async fn sync_endpoint_retries_asset_stuck_in_syncing() {
+    let (db, _tmp) = setup_test_db().await;
+
+    let github_mock = MockServer::start().await;
+    let r2_mock = MockServer::start().await;
+
+    let asset_url = format!("{}/asset", github_mock.uri());
+    Mock::given(method("GET"))
+        .and(path("/repos/OakVideoEditorCommunity/oak/releases"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(vec![serde_json::json!({
+            "id": 1,
+            "tag_name": "v0.1.0",
+            "name": "v0.1.0",
+            "body": null,
+            "prerelease": false,
+            "published_at": "2024-01-01T00:00:00Z",
+            "assets": [{
+                "id": 10,
+                "name": "oak.exe",
+                "size": 14,
+                "browser_download_url": asset_url
+            }]
+        })]))
+        .mount(&github_mock)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path("/asset"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-length", "14")
+                .set_body_bytes(b"fake exe bytes"),
+        )
+        .expect(1)
+        .mount(&github_mock)
+        .await;
+
+    Mock::given(method("PUT"))
+        .and(path_regex(r"^/test-bucket/releases/[0-9a-fA-F-]+/oak\.exe$"))
+        .respond_with(ResponseTemplate::new(200).insert_header("ETag", "\"etag123\""))
+        .expect(1)
+        .mount(&r2_mock)
+        .await;
+
+    // Seed a release whose asset was stranded in "syncing", as a backend
+    // restart in the middle of a sync would leave behind.
+    use oak_website_backend::entities::{release_assets, releases};
+    let release_id = Uuid::new_v4();
+    releases::ActiveModel {
+        id: Set(release_id),
+        version: Set("v0.1.0".to_string()),
+        tag_name: Set("v0.1.0".to_string()),
+        release_notes: Set(None),
+        is_prerelease: Set(false),
+        published_at: Set(Some(
+            chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z").unwrap(),
+        )),
+        created_at: Set(chrono::Utc::now().into()),
+        updated_at: Set(chrono::Utc::now().into()),
+    }
+    .insert(&db)
+    .await
+    .unwrap();
+    release_assets::ActiveModel {
+        id: Set(Uuid::new_v4()),
+        release_id: Set(release_id),
+        platform: Set("windows".to_string()),
+        arch: Set(None),
+        filename: Set("oak.exe".to_string()),
+        github_url: Set(asset_url.clone()),
+        r2_key: Set(None),
+        r2_etag: Set(None),
+        size_bytes: Set(Some(14)),
+        sync_status: Set("syncing".to_string()),
+        synced_at: Set(None),
+        created_at: Set(chrono::Utc::now().into()),
+        updated_at: Set(chrono::Utc::now().into()),
+    }
+    .insert(&db)
+    .await
+    .unwrap();
+
+    let config = AppConfig {
+        database: DatabaseConfig {
+            url: "sqlite::memory:".to_string(),
+        },
+        server: ServerConfig {
+            host: "127.0.0.1".to_string(),
+            port: 0,
+        },
+        github: GithubConfig {
+            owner: "OakVideoEditorCommunity".to_string(),
+            repo: "oak".to_string(),
+            token: None,
+            api_base: github_mock.uri(),
+        },
+        r2: R2Config {
+            endpoint_url: r2_mock.uri(),
+            access_key_id: "key".to_string(),
+            secret_access_key: "secret".to_string(),
+            bucket_name: "test-bucket".to_string(),
+            public_domain: None,
+            region: "auto".to_string(),
+        },
+        admin: AdminConfig {
+            token: "admin-token".to_string(),
+        },
+        docs: DocsConfig {
+            html_dir: std::env::temp_dir().to_str().unwrap().to_string(),
+            git_url: None,
+            update_interval_hours: 24,
+        },
+    };
+
+    let app = build_test_app_with_config(db.clone(), config).await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/admin/releases/sync")
+                .header("content-type", "application/json")
+                .header("authorization", "Bearer admin-token")
+                .body(Body::from(r#"{}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    github_mock.verify().await;
+    r2_mock.verify().await;
+
+    // The stranded asset must have been retried and become ready.
+    let assets = release_assets::Entity::find().all(&db).await.unwrap();
+    assert_eq!(assets.len(), 1);
+    assert_eq!(assets[0].sync_status, "ready");
+    assert!(assets[0].r2_key.is_some());
 }

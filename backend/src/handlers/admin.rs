@@ -94,7 +94,11 @@ pub async fn sync_releases(
                 .await?
                 .ok_or_else(|| AppError::Internal("asset disappeared".to_string()))?;
 
-            if current.sync_status == "pending" || current.sync_status == "failed" {
+            // Retry everything that is not fully synced. "syncing" must be
+            // retried too: if the backend restarts mid-sync, the asset would
+            // otherwise stay in that state forever and never reappear on the
+            // download page.
+            if current.sync_status != "ready" {
                 release_assets::Entity::update(release_assets::ActiveModel {
                     id: Set(asset_id),
                     sync_status: Set("syncing".to_string()),
