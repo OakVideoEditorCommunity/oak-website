@@ -19,7 +19,7 @@
           <ul class="space-y-1">
             <li v-for="page in pages[lang]" :key="page.slug">
               <NuxtLink
-                :to="localePath(`/docs/${lang}/${page.slug}` as any)"
+                :to="localePath(docPath(version, lang, page.slug) as any)"
                 class="block text-sm px-2 py-1 rounded hover:bg-emerald-50"
                 :class="{ 'bg-emerald-100 text-emerald-800 font-medium': isActive(page) }"
               >
@@ -40,10 +40,13 @@ interface Props {
   pages: DocsIndex
   currentLang?: string
   currentSlug?: string
+  // null = default (latest) version; links then omit the version segment.
+  version?: string | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { version: null })
 const localePath = useLocalePath()
+const { docPath } = useDocsVersions()
 
 function isActive(page: DocPageSummary) {
   return page.lang === props.currentLang && page.slug === props.currentSlug

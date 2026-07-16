@@ -4,7 +4,7 @@
 
 - **前端**：Nuxt 3 + Vue 3，SSR，SEO 优化，中英双语。
 - **后端**：Rust + Axum + SeaORM + PostgreSQL。
-- **文档托管**：自动构建 `/home/mikesolar/Projects/oak-docs` 中的 RST 文档（Sphinx）。
+- **文档托管**：自动构建 `/home/mikesolar/Projects/oak-docs` 中的 RST 文档（Sphinx），支持同时托管多个版本，默认展示最新版本。
 - **下载分发**：从 GitHub Releases 拉取二进制，上传到 Cloudflare R2，用户下载时返回 R2 预签名链接。
 - **CDN**：Nuxt Nitro 支持 Cloudflare CDN 域名配置。
 
@@ -83,9 +83,19 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 - `GET /api/v1/releases` — 所有 releases
 - `GET /api/v1/releases/latest` — 最新 release
 - `GET /api/v1/releases/{id}/download?platform=&arch=` — 302 到 R2 预签名链接
-- `GET /api/v1/docs` — 文档目录（zh/en）
-- `GET /api/v1/docs/{lang}/{slug}` — 单篇文档 HTML
+- `GET /api/v1/docs` — 文档目录（zh/en，默认版本；可用 `?version=<版本>` 指定版本）
+- `GET /api/v1/docs/versions` — 所有文档版本及默认（最新）版本
+- `GET /api/v1/docs/{lang}/{slug}` — 单篇文档 HTML（默认版本）
+- `GET /api/v1/docs/{version}/{lang}/{slug}` — 指定版本的单篇文档 HTML
 - `POST /api/admin/releases/sync` — 触发 GitHub → R2 同步
+
+## 文档多版本
+
+站点可以同时托管多个版本的文档，默认向用户展示最新版本：
+
+- **版本来源**：`docs-builder` 按 `DOCS_VERSIONS`（逗号分隔的 git tag/branch，第一个为默认版本）构建；留空时自动构建 oak-docs 仓库中所有 semver tag（如 `v0.1.0`）；仓库没有 tag 时只构建一个 `latest` 版本。
+- **URL 规则**：默认版本文档在 `/docs/{lang}/{slug}`，历史版本在 `/docs/{version}/{lang}/{slug}`；文档页左上角有版本切换器。
+- **目录结构**：构建产物为 `{docs-html}/{版本}/{lang}/`，外加 `versions.json` 清单（版本列表与默认版本），后端启动时加载、定时同步时整体替换。
 
 ## Cloudflare CDN
 
@@ -163,4 +173,4 @@ npm run dev
 - 当前 Oak Video Editor 处于 alpha 阶段，请在下载页显著位置提示用户。
 - R2 预签名链接有效期为 5 分钟。
 - 大文件同步可能需要较长时间，视网络与 R2 速度而定。
-- 文档构建使用 `docs-builder` 服务，会在容器启动时运行一次；更新文档后需重启 `docs-builder` 与 `backend` 服务。
+- 文档构建使用 `docs-builder` 服务，会在容器启动时按配置的版本列表（或文档仓库的全部 semver tag）构建一次；更新文档或新增版本 tag 后需重启 `docs-builder` 与 `backend` 服务。

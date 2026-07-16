@@ -28,10 +28,17 @@ export interface DocPage {
   slug: string
   title: string
   lang: string
+  version: string
   html: string
 }
 
 export interface DocsIndex {
+  version: string
   zh: DocPageSummary[]
   en: DocPageSummary[]
+}
+
+export interface DocsVersions {
+  versions: string[]
+  latest: string
 }

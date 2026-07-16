@@ -21,6 +21,9 @@ services:
     environment:
       DOCS_SRC_DIR: /data/oak-docs
       DOCS_OUT_DIR: /data/docs-html
+      # 要托管的文档版本（文档仓库的 git tag/branch，逗号分隔，第一个为默认版本）。
+      # 留空则自动构建仓库中所有 semver tag；仓库没有 tag 时只构建一个 latest 版本。
+      DOCS_VERSIONS: ${DOCS_VERSIONS:-}
     command: ["build-docs"]
 
   backend:

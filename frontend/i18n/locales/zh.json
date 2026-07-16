@@ -25,7 +25,9 @@
     "title": "文档",
     "subtitle": "学习如何使用 Oak Video Editor。",
     "index": "目录",
-    "notFound": "文档未找到"
+    "notFound": "文档未找到",
+    "version": "版本",
+    "latest": "最新"
   },
   "hero": {
     "title": "Oak Video Editor",

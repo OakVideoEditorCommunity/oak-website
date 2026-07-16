@@ -25,7 +25,9 @@
     "title": "Documentation",
     "subtitle": "Learn how to use Oak Video Editor.",
     "index": "Index",
-    "notFound": "Document not found"
+    "notFound": "Document not found",
+    "version": "Version",
+    "latest": "Latest"
   },
   "hero": {
     "title": "Oak Video Editor",

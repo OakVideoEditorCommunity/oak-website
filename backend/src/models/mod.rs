@@ -68,11 +68,26 @@ pub struct DocPageResponse {
     pub slug: String,
     pub title: String,
     pub lang: String,
+    pub version: String,
     pub html: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DocsIndexResponse {
+    /// The documentation version these TOCs belong to.
+    pub version: String,
     pub zh: Vec<DocPageSummary>,
     pub en: Vec<DocPageSummary>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DocsVersionsResponse {
+    pub versions: Vec<String>,
+    pub latest: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DocsIndexQuery {
+    /// Documentation version to list. Defaults to the index's default version.
+    pub version: Option<String>,
 }

@@ -4,6 +4,9 @@
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ $t('docs.title') }}</h1>
         <p class="text-gray-600">{{ $t('docs.subtitle') }}</p>
+        <div class="mt-4 flex justify-center">
+          <DocsVersionSwitcher :version="null" />
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

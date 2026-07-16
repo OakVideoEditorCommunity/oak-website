@@ -14,5 +14,8 @@ RUN chmod +x /usr/local/bin/build-docs
 
 ENV DOCS_SRC_DIR=/data/oak-docs
 ENV DOCS_OUT_DIR=/data/docs-html
+# Optional comma-separated git refs to build as versions (first = latest).
+# Default empty: build all semver tags, or a single "latest" version if none.
+ENV DOCS_VERSIONS=""
 
 CMD ["build-docs"]

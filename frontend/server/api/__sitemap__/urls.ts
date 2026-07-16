@@ -1,4 +1,4 @@
-import type { DocsIndex } from '~/types'
+import type { DocsIndex, DocsVersions } from '~/types'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -13,15 +13,43 @@ export default defineEventHandler(async (event) => {
     { loc: `${baseUrl}/en/docs`, changefreq: 'weekly', priority: 0.8 },
   ]
 
-  try {
-    // Server-side fetch, so use the internal backend URL.
-    const docs: DocsIndex = await $fetch(`${config.apiBaseUrl}/api/v1/docs`)
+  // The latest version keeps the canonical unprefixed URLs (with the /en
+  // locale variants); older versions get /docs/{version}/{lang}/{slug}.
+  const addVersioned = (docs: DocsIndex, version: string, isLatest: boolean) => {
     for (const page of docs.zh) {
-      urls.push({ loc: `${baseUrl}/docs/zh/${page.slug}`, changefreq: 'monthly', priority: 0.6 })
+      const path = isLatest ? `/docs/zh/${page.slug}` : `/docs/${version}/zh/${page.slug}`
+      urls.push({ loc: `${baseUrl}${path}`, changefreq: 'monthly', priority: 0.6 })
     }
     for (const page of docs.en) {
-      urls.push({ loc: `${baseUrl}/docs/en/${page.slug}`, changefreq: 'monthly', priority: 0.6 })
-      urls.push({ loc: `${baseUrl}/en/docs/en/${page.slug}`, changefreq: 'monthly', priority: 0.6 })
+      const path = isLatest ? `/docs/en/${page.slug}` : `/docs/${version}/en/${page.slug}`
+      urls.push({ loc: `${baseUrl}${path}`, changefreq: 'monthly', priority: 0.6 })
+      if (isLatest) {
+        urls.push({ loc: `${baseUrl}/en/docs/en/${page.slug}`, changefreq: 'monthly', priority: 0.6 })
+      }
+    }
+  }
+
+  try {
+    // Server-side fetch, so use the internal backend URL.
+    const docsVersions = await $fetch<DocsVersions>(`${config.apiBaseUrl}/api/v1/docs/versions`).catch(() => null)
+
+    if (docsVersions && docsVersions.versions.length > 0) {
+      const tocs = await Promise.all(
+        docsVersions.versions.map((version) =>
+          $fetch<DocsIndex>(`${config.apiBaseUrl}/api/v1/docs?version=${encodeURIComponent(version)}`).catch(() => null)
+        )
+      )
+      docsVersions.versions.forEach((version, i) => {
+        const toc = tocs[i]
+        if (toc) {
+          addVersioned(toc, version, version === docsVersions.latest)
+        }
+      })
+    } else {
+      // No versioned docs (or an older backend): fall back to the unversioned
+      // listing, which always serves the default version.
+      const docs: DocsIndex = await $fetch(`${config.apiBaseUrl}/api/v1/docs`)
+      addVersioned(docs, '', true)
     }
   } catch (e) {
     console.error('Failed to fetch docs for sitemap', e)

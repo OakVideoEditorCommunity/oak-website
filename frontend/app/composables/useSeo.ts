@@ -3,6 +3,7 @@ interface SeoOptions {
   description?: string
   image?: string
   url?: string
+  canonicalPath?: string
   type?: string
   jsonLd?: Record<string, any>
 }
@@ -17,6 +18,11 @@ export function useOakSeo(options: SeoOptions = {}) {
   const title = options.title ? `${options.title} - ${siteName}` : siteName
   const description = options.description || defaultDescription
   const url = options.url || `${config.public.siteUrl}${route.path}`
+  // Pinned-version pages keep og:url on the real URL but canonicalize to the
+  // default (latest) docs URL.
+  const canonicalUrl = options.canonicalPath
+    ? `${config.public.siteUrl}${options.canonicalPath}`
+    : url
   const image = options.image || config.public.cdnDomain || ''
 
   const meta: any[] = [
@@ -40,7 +46,7 @@ export function useOakSeo(options: SeoOptions = {}) {
     title,
     meta,
     link: [
-      { rel: 'canonical', href: url },
+      { rel: 'canonical', href: canonicalUrl },
     ],
   })
 
