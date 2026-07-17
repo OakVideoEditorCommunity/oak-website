@@ -1,7 +1,9 @@
 <template>
+  <label for="lang">Language &nbsp;</label>
   <select
     :value="locale"
     class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+    id="lang"
     @change="switchLocale"
   >
     <option v-for="loc in locales" :key="loc.code" :value="loc.code">
