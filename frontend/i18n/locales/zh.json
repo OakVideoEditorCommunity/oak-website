@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "首页",
+    "features": "功能",
     "download": "下载",
     "docs": "文档"
   },
@@ -27,7 +28,10 @@
     "index": "目录",
     "notFound": "文档未找到",
     "version": "版本",
-    "latest": "最新"
+    "latest": "最新",
+    "movedTitle": "文档已迁移",
+    "moved": "Oak Video Editor 的文档已迁移至独立文档站 docs.oakvideoeditor.org，正在为你跳转…",
+    "movedButton": "前往文档站"
   },
   "hero": {
     "title": "Oak Video Editor",
@@ -50,6 +54,62 @@
     "openfx": {
       "title": "OpenFX 插件",
       "desc": "可加载 OpenFX 插件，扩展创意可能性。"
+    },
+    "more": "了解全部功能"
+  },
+  "featuresPage": {
+    "title": "功能详情",
+    "subtitle": "从剪辑到调色：Oak Video Editor 为专业工作流打造的核心能力。",
+    "ocio": {
+      "title": "OCIO 调色支持",
+      "tagline": "影视工业级调色管线",
+      "desc": "内置 OpenColorIO v2（通过安全的 Rust 绑定 ocio-rs）。直接加载工作室现成的 OCIO 配置（含 ACES），或应用 .cube / .3dl LUT 文件进行风格化调色，与 Nuke、Maya 等后期软件保持一致的色彩变换结果。",
+      "points": [
+        "加载完整 OCIO 配置（含 ACES），复用团队现有调色管线",
+        "支持 .cube / .3dl LUT 文件的加载与应用",
+        "色彩处理器贯穿整条管线，实时预览调色结果"
+      ]
+    },
+    "openfx": {
+      "title": "OpenFX 插件支持",
+      "tagline": "海量第三方特效生态",
+      "desc": "OpenFX（OFX）是开放的视频特效插件标准——DaVinci Resolve、Vegas Pro 等专业软件使用的正是这一插件格式。Oak 是完整的 OFX 宿主：自动扫描系统与用户级标准插件目录，直接加载市面上的第三方 OFX 插件（降噪、美颜、光效等），无需等待官方适配。",
+      "points": [
+        "与 DaVinci Resolve / Vegas Pro 共用同一插件格式",
+        "自动扫描标准 OFX 目录（macOS /Library/OFX/Plugins、Linux /usr/OFX/Plugins、Windows Common Files\\OFX\\Plugins），支持 OFX_PLUGIN_PATH 扩展",
+        "插件参数面板实时调节，即调即见"
+      ]
+    },
+    "otio": {
+      "title": "OpenTimelineIO 导入导出",
+      "tagline": "开放的时间线交换格式",
+      "desc": "OpenTimelineIO（OTIO）是由皮克斯发起、学院软件基金会维护的开放时间线格式。Oak 通过原生实现的 oakotio 引擎支持导入与导出 .otio 以及 .fcpxml（Final Cut Pro XML）：序列、视频/音频/字幕轨道、剪辑、空隙与转场都能完整带过去，从其它剪辑软件迁移项目或与下游环节交换剪辑决策都很顺畅。",
+      "points": [
+        "导入与导出 .otio、.fcpxml 双格式",
+        "保留轨道结构、剪辑点与转场",
+        "适合项目迁移、协作交换与归档"
+      ],
+      "note": "说明：OTIO 是交换格式，聚焦时间线结构；特效链与关键帧动画不随其迁移。"
+    },
+    "colorMgmt": {
+      "title": "色彩管理",
+      "tagline": "端到端的色彩准确性",
+      "desc": "从素材解码、时间线工作空间到监视器输出的全链路色彩管理。项目输出空间明确定义（sRGB / Rec.709，或 P3 / BT.2020 广色域），支持 PQ（ST 2084）与 HLG 高动态范围转换；显示端遵循「单次映射」原则——在 Wayland、Windows 11 ACM、macOS ColorSync 上交由系统完成色彩映射，X11 与旧版 Windows 则由 Oak 通过显示器 ICC 自行校正，广色域屏幕上也不偏色。",
+      "points": [
+        "支持 HDR：PQ（ST 2084）/ HLG 输出转换",
+        "广色域：Display P3 / BT.2020 项目输出空间",
+        "按平台自动选择系统级或应用级显示色彩校正"
+      ]
+    },
+    "tenBit": {
+      "title": "10bit 上屏",
+      "tagline": "所见即所得的监看体验",
+      "desc": "画面以 10bit 精度（U10）贯穿处理与显示输出链路，在支持的显卡与显示器上呈现超过 10 亿级色彩。渐变平滑无断层，调色时天空、暗部等易断层画面的每一个色阶都清晰可辨。",
+      "points": [
+        "全链路 10bit（U10）精度处理与输出",
+        "消除 8bit 显示带来的渐变断层（banding）",
+        "配合色彩管理，HDR 监看更准确"
+      ]
     }
   },
   "cta": {
@@ -60,7 +120,30 @@
   "footer": {
     "tagline": "社区维护的免费视频编辑器。",
     "links": "链接",
-    "community": "社区"
+    "community": "社区",
+    "bugReport": "反馈问题"
+  },
+  "bugReport": {
+    "title": "反馈问题",
+    "subtitle": "遇到了问题？告诉我们，帮助我们改进 Oak Video Editor。",
+    "form": {
+      "title": "标题",
+      "version": "版本号",
+      "versionPlaceholder": "如 v0.4.2-alpha",
+      "content": "问题描述",
+      "contentPlaceholder": "请描述问题现象，以及复现问题的操作步骤…",
+      "email": "联系邮箱（选填）",
+      "emailHint": "可能会用于联络你以了解问题详情。",
+      "screenshot": "截图（选填）",
+      "log": "日志（选填）",
+      "logHint": "如果有的话，请附上日志文件。",
+      "submit": "提交反馈",
+      "submitting": "提交中…"
+    },
+    "success": "提交成功，感谢你的反馈！",
+    "successHint": "我们会认真阅读每一条反馈；如留有邮箱，必要时将与你联系。",
+    "another": "再提交一条",
+    "error": "提交失败，请稍后重试。"
   },
   "loading": "加载中…",
   "releases": {
@@ -72,6 +155,10 @@
     "downloadTitle": "下载",
     "downloadDescription": "下载 Oak Video Editor 的最新版本，支持 Windows、macOS 与 Linux。",
     "docsTitle": "文档",
-    "docsDescription": "Oak Video Editor 用户手册与文档。"
+    "docsDescription": "Oak Video Editor 用户手册与文档。",
+    "featuresTitle": "功能",
+    "featuresDescription": "Oak Video Editor 功能详情：OCIO 调色、OpenFX 插件、OpenTimelineIO 导入导出、全链路色彩管理与 10bit 上屏。",
+    "bugReportTitle": "反馈问题",
+    "bugReportDescription": "反馈 Oak Video Editor 使用中遇到的问题。"
   }
 }

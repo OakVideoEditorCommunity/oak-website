@@ -1,6 +1,6 @@
 <template>
   <button
-    class="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-lg shadow hover:bg-emerald-700 transition focus:outline-none focus:ring-2 focus:ring-emerald-500"
+    class="inline-flex items-center justify-center px-6 py-3 bg-gold-500 text-forest-950 rounded-xl font-semibold text-lg shadow shadow-gold-500/20 hover:bg-gold-400 transition focus:outline-none focus:ring-2 focus:ring-gold-400 disabled:opacity-60"
     :disabled="loading"
     @click="handleDownload"
   >

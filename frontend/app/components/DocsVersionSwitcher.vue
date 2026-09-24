@@ -1,11 +1,11 @@
 <template>
   <div v-if="versions.length" class="flex items-center gap-2">
-    <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+    <label class="text-xs font-semibold text-emerald-100/50 uppercase tracking-wide">
       {{ $t('docs.version') }}
     </label>
     <select
       :value="version ?? latest"
-      class="bg-gray-100 border border-gray-300 text-gray-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+      class="bg-forest-800 border border-gold-500/30 text-emerald-100 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gold-400"
       @change="switchVersion"
     >
       <option v-for="v in versions" :key="v" :value="v">

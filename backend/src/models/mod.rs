@@ -46,6 +46,25 @@ pub struct DownloadQuery {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct UpdateQuery {
+    pub platform: Option<String>,
+    pub arch: Option<String>,
+}
+
+/// Payload for the auto-update check. `download_url` is a site-relative path
+/// that 302-redirects to the real file, and is only present when a `platform`
+/// was requested and a matching ready asset exists.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateInfoResponse {
+    pub version: String,
+    pub tag_name: String,
+    pub notes: Option<String>,
+    pub is_prerelease: bool,
+    pub published_at: Option<DateTime<FixedOffset>>,
+    pub download_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SyncReleaseRequest {
     pub tag: Option<String>,
 }
@@ -54,6 +73,35 @@ pub struct SyncReleaseRequest {
 pub struct SyncResponse {
     pub synced: usize,
     pub message: String,
+}
+
+/// Response after a successful bug-report submission.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BugReportSubmitResponse {
+    pub id: Uuid,
+    pub message: String,
+}
+
+/// Admin view of a bug report. Attachments are exposed as time-limited
+/// presigned R2 URLs (None when the report has no such attachment or signing
+/// failed).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BugReportDto {
+    pub id: Uuid,
+    pub title: String,
+    pub app_version: String,
+    pub content: String,
+    pub email: Option<String>,
+    pub screenshot_filename: Option<String>,
+    pub screenshot_url: Option<String>,
+    pub log_filename: Option<String>,
+    pub log_url: Option<String>,
+    pub created_at: DateTime<FixedOffset>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BugReportListResponse {
+    pub reports: Vec<BugReportDto>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

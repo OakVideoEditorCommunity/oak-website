@@ -2,20 +2,20 @@
 
 本项目是 [Oak Video Editor](https://github.com/OakVideoEditorCommunity/oak) 的官方网站，包含：
 
-- **前端**：Nuxt 3 + Vue 3，SSR，SEO 优化，中英双语。
+- **前端**：Nuxt 4 + Vue 3，SSG 纯静态站点（nginx 托管），深绿-金色暗色主题，SEO 优化，中英双语。
 - **后端**：Rust + Axum + SeaORM + PostgreSQL。
-- **文档托管**：自动构建 `/home/mikesolar/Projects/oak-docs` 中的 RST 文档（Sphinx），支持同时托管多个版本，默认展示最新版本。
+- **文档外链**：文档托管在独立站点 [docs.oakvideoeditor.org](https://docs.oakvideoeditor.org)，官网 `/docs` 路由 301 重定向过去。
 - **下载分发**：从 GitHub Releases 拉取二进制，上传到 Cloudflare R2，用户下载时返回 R2 预签名链接。
-- **CDN**：Nuxt Nitro 支持 Cloudflare CDN 域名配置。
+- **CDN**：静态资源可配置 CDN 域名前缀。
 
 ## 目录结构
 
 ```
 oak-website/
-├── frontend/       # Nuxt 3 前端
+├── frontend/       # Nuxt 4 前端（SSG 静态站点 + nginx）
 ├── backend/        # Rust + Axum 后端
-├── docs-builder/   # Sphinx 文档构建镜像
-├── docker-compose.yml
+├── docker-compose.yml      # 生产：拉取 GHCR 预构建镜像 + watchtower
+├── docker-compose.dev.yml  # 开发：本地构建镜像
 └── .env.example
 ```
 
@@ -47,15 +47,23 @@ cp .env.example .env
 
 ### 3. 启动
 
+生产模式（拉取 GHCR 预构建镜像，watchtower 自动更新）：
+
 ```bash
 docker compose up -d
 ```
 
+开发模式（本地构建 backend/frontend 镜像，无 watchtower）：
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
 服务：
 
-- 前端：`http://localhost:3000`
+- 前端：`http://localhost:3000`（nginx 托管静态站点，`/api/*` 反代到后端）
 - 后端 API：`http://localhost:8081`
-- PostgreSQL：`localhost:5432`（未暴露到宿主机，仅在容器网络内访问）
+- PostgreSQL：`localhost:5432`（生产模式未暴露到宿主机，仅在容器网络内访问；开发模式暴露便于调试）
 
 > 如果本地 8080 已被占用，`docker-compose.yml` 默认将后端映射到 `8081:8080`。
 
@@ -83,19 +91,23 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 - `GET /api/v1/releases` — 所有 releases
 - `GET /api/v1/releases/latest` — 最新 release
 - `GET /api/v1/releases/{id}/download?platform=&arch=` — 302 到 R2 预签名链接
+- `GET /api/v1/update/latest?platform=&arch=` — 自动更新检查：返回最新稳定版本号与更新说明（`notes`）；尚无稳定版时回退到最新预发布版（响应中 `is_prerelease` 为 `true`）；给出 `platform`（可选 `arch`）且对应资产就绪时附带站内下载地址 `download_url`（302 跳转的真实文件路径）
+- `POST /api/v1/bug-reports` — 提交 Bug 反馈（multipart 表单：`title`/`version`/`content` 必填，`email`/`screenshot`/`log` 选填；截图仅限图片、单文件最大 10MB；附件存入 R2，提交成功后邮件通知 `APP__SMTP__REPORT_RECIPIENT`，未配置 SMTP 时只入库）
+- `GET /api/v1/bug-reports/{id}/files/{screenshot|log}` — 反馈附件的永久直链（免鉴权，报告 ID 即访问凭证；访问时现场生成预签名 URL 并 302 跳转），用于邮件列表场景；需在 `APP__SERVER__PUBLIC_URL` 配置后端公网地址
+- `GET /api/admin/bug-reports` — 查看 Bug 反馈列表（需 admin Token，附件返回 1 小时有效的预签名链接；也可在官网 `/admin` 页面输入 Token 查看）
 - `GET /api/v1/docs` — 文档目录（zh/en，默认版本；可用 `?version=<版本>` 指定版本）
 - `GET /api/v1/docs/versions` — 所有文档版本及默认（最新）版本
 - `GET /api/v1/docs/{lang}/{slug}` — 单篇文档 HTML（默认版本）
 - `GET /api/v1/docs/{version}/{lang}/{slug}` — 指定版本的单篇文档 HTML
 - `POST /api/admin/releases/sync` — 触发 GitHub → R2 同步
 
-## 文档多版本
+## 文档站
 
-站点可以同时托管多个版本的文档，默认向用户展示最新版本：
+文档已迁移到独立站点 [docs.oakvideoeditor.org](https://docs.oakvideoeditor.org)：
 
-- **版本来源**：`docs-builder` 按 `DOCS_VERSIONS`（逗号分隔的 git tag/branch，第一个为默认版本）构建；留空时自动构建 oak-docs 仓库中所有 semver tag（如 `v0.1.0`）；仓库没有 tag 时只构建一个 `latest` 版本。
-- **URL 规则**：默认版本文档在 `/docs/{lang}/{slug}`，历史版本在 `/docs/{version}/{lang}/{slug}`；文档页左上角有版本切换器。
-- **目录结构**：构建产物为 `{docs-html}/{版本}/{lang}/`，外加 `versions.json` 清单（版本列表与默认版本），后端启动时加载、定时同步时整体替换。
+- 官网导航中的「文档」链接直接指向文档站（新标签页打开）。
+- 官网 `/docs`、`/zh/docs` 及其子路径由前端 nginx 返回 301 重定向到文档站对应路径（去掉 `/docs` 前缀）；静态页内也保留了 meta refresh 与「已迁移」提示作为兜底。
+- 后端的 `/api/v1/docs*` 接口仍然保留，供文档站或其它方作为数据源使用。
 
 ## Cloudflare CDN
 
@@ -105,7 +117,9 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 NUXT_PUBLIC_CDN_DOMAIN=https://assets.oakvideoeditor.org
 ```
 
-Nuxt Nitro 会将静态资源（JS/CSS/图片）的 URL 前缀替换为该域名。API 路由不会被 CDN 缓存；文档页面可配置 ISR 缓存。
+Nuxt 会将静态资源（JS/CSS/图片）的 URL 前缀替换为该域名（构建时固化）。API 请求不会被 CDN 缓存。
+
+注意：前端是纯静态站点，`NUXT_PUBLIC_*` 在**构建时**固化到产物中——直接 `npm run generate` 时请提前设置环境变量；使用 Docker 时通过 `--build-arg NUXT_PUBLIC_SITE_URL=...`（或 compose 的 `build.args`）注入。
 
 ## 测试
 
@@ -163,7 +177,7 @@ npm run dev
 1. 准备 PostgreSQL 数据库。
 2. 创建 Cloudflare R2 bucket 并生成 API token。
 3. 填写 `.env` 中所有 R2 与管理员配置。
-4. 设置 `NUXT_PUBLIC_SITE_URL` 与 `NUXT_PUBLIC_CDN_DOMAIN`。
+4. 构建前端镜像时通过 build arg 设置 `NUXT_PUBLIC_SITE_URL` 与 `NUXT_PUBLIC_CDN_DOMAIN`（默认 `https://www.oakvideoeditor.org` 与空）。
 5. 运行 `docker compose up -d`。
 6. 调用一次 `/api/admin/releases/sync` 同步历史 release。
 7. 配置 Cloudflare DNS 指向运行 `frontend` 的服务器，并在 Cloudflare 控制台开启 CDN。

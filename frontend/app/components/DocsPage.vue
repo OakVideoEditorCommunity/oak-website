@@ -1,8 +1,8 @@
 <template>
-  <div class="py-12 bg-gray-50 min-h-screen">
+  <div class="py-12 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8">
       <div class="w-full md:w-64 shrink-0">
-        <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="bg-forest-900 border border-gold-500/15 rounded-xl shadow shadow-black/30 p-4 mb-4">
           <DocsVersionSwitcher :version="version" :lang="lang" :slug="slug" />
         </div>
         <DocsSidebar
@@ -13,13 +13,13 @@
         />
       </div>
 
-      <article class="flex-1 bg-white rounded-2xl shadow p-8">
-        <div v-if="pending" class="py-20 text-center">{{ $t('loading') }}</div>
+      <article class="flex-1 bg-forest-900 border border-gold-500/15 rounded-2xl shadow shadow-black/30 p-8">
+        <div v-if="pending" class="py-20 text-center text-emerald-100/60">{{ $t('loading') }}</div>
         <div v-else-if="doc">
-          <h1 class="text-3xl font-bold mb-6">{{ doc.title }}</h1>
-          <div class="prose prose-emerald max-w-none doc-content" v-html="sanitizedHtml" />
+          <h1 class="text-3xl font-bold text-emerald-50 mb-6">{{ doc.title }}</h1>
+          <div class="prose prose-invert max-w-none doc-content" v-html="sanitizedHtml" />
         </div>
-        <div v-else class="py-20 text-center text-gray-500">{{ $t('docs.notFound') }}</div>
+        <div v-else class="py-20 text-center text-emerald-100/50">{{ $t('docs.notFound') }}</div>
       </article>
     </div>
   </div>
@@ -59,6 +59,7 @@ const { data: docsIndex } = await useAsyncData<DocsIndex>(
   },
   {
     watch: [() => props.version],
+    server: false,
   }
 )
 
@@ -76,6 +77,7 @@ const { data: doc, pending } = await useAsyncData<DocPage | null>(
   },
   {
     watch: [lang, slug, () => props.version],
+    server: false,
   }
 )
 
@@ -108,13 +110,13 @@ useOakSeo({
   border-radius: 0.5rem;
 }
 .doc-content :deep(pre) {
-  background: #f3f4f6;
+  background: #081712;
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
 }
 .doc-content :deep(code) {
-  background: #f3f4f6;
+  background: #081712;
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
 }

@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-white rounded-2xl shadow p-6 border border-gray-100">
+  <div class="bg-forest-900 rounded-2xl border border-gold-500/15 shadow shadow-black/30 p-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-xl font-bold text-gray-900">{{ release.version }}</h3>
-      <span v-if="release.is_prerelease" class="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">Pre-release</span>
+      <h3 class="text-xl font-bold text-emerald-50">{{ release.version }}</h3>
+      <span v-if="release.is_prerelease" class="px-2 py-1 text-xs font-medium bg-gold-500/15 text-gold-300 border border-gold-500/30 rounded-full">Pre-release</span>
     </div>
 
-    <p v-if="release.published_at" class="text-sm text-gray-500 mb-4">
+    <p v-if="release.published_at" class="text-sm text-emerald-100/50 mb-4">
       {{ formatDate(release.published_at) }}
     </p>
 
@@ -13,13 +13,13 @@
       <div
         v-for="asset in readyAssets"
         :key="asset.id"
-        class="flex flex-col gap-2 p-3 bg-gray-50 rounded-lg"
+        class="flex flex-col gap-2 p-3 bg-forest-950/60 border border-gold-500/10 rounded-lg hover:border-gold-500/40 transition"
       >
-        <div class="font-medium text-gray-800">
+        <div class="font-medium text-emerald-100/90">
           {{ platformLabel(asset.platform) }}
-          <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded">{{ packageFormat(asset.filename) }}</span>
+          <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageFormat(asset.filename) }}</span>
         </div>
-        <div class="text-xs text-gray-500">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
+        <div class="text-xs text-emerald-100/50">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
         <DownloadButton
           :release-id="release.id"
           :platform="asset.platform"

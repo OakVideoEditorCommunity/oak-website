@@ -77,6 +77,7 @@ mod tests {
             server: ServerConfig {
                 host: "127.0.0.1".to_string(),
                 port: 0,
+                public_url: None,
             },
             github: GithubConfig {
                 owner: "OakVideoEditorCommunity".to_string(),
@@ -100,6 +101,7 @@ mod tests {
                 git_url: None,
                 update_interval_hours: 24,
             },
+            smtp: Default::default(),
         }
     }
 

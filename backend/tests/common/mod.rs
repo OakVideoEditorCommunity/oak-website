@@ -34,6 +34,7 @@ pub async fn build_test_app(db: DatabaseConnection) -> axum::Router {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -60,6 +61,7 @@ pub async fn build_test_app(db: DatabaseConnection) -> axum::Router {
             git_url: None,
             update_interval_hours: 24,
         },
+        smtp: Default::default(),
     };
 
     let s3 = create_s3_client(&config.r2).expect("failed to create s3 client");
@@ -79,6 +81,7 @@ pub async fn build_test_app_with_docs(db: DatabaseConnection, html_dir: String) 
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -98,6 +101,7 @@ pub async fn build_test_app_with_docs(db: DatabaseConnection, html_dir: String) 
             token: "test-token".to_string(),
         },
         docs: DocsConfig { html_dir, git_url: None, update_interval_hours: 24 },
+        smtp: Default::default(),
     };
 
     let s3 = create_s3_client(&config.r2).expect("failed to create s3 client");

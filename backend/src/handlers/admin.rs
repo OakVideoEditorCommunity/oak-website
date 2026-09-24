@@ -1,16 +1,53 @@
 use axum::{extract::State, Json};
 use chrono::Utc;
 use futures::StreamExt;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set};
+use std::time::Duration;
 use uuid::Uuid;
 
 use crate::{
-    entities::{release_assets, releases},
+    entities::{bug_reports, release_assets, releases},
     error::{AppError, AppResult},
-    models::{SyncReleaseRequest, SyncResponse},
+    models::{BugReportDto, BugReportListResponse, SyncReleaseRequest, SyncResponse},
     services::{github::{infer_platform_arch, is_debug_package}, GithubClient, R2Service},
     state::AppState,
 };
+
+/// Lists stored bug reports, newest first. Attachment keys are turned into
+/// short-lived presigned URLs so admins can open them straight from the list.
+pub async fn list_bug_reports(State(state): State<AppState>) -> AppResult<Json<BugReportListResponse>> {
+    let reports = bug_reports::Entity::find()
+        .order_by_desc(bug_reports::Column::CreatedAt)
+        .all(&state.db)
+        .await?;
+
+    let r2 = R2Service::new(state.s3.clone(), &state.config.r2);
+    let mut dtos = Vec::with_capacity(reports.len());
+    for report in reports {
+        let mut screenshot_url = None;
+        let mut log_url = None;
+        if let Some(key) = &report.screenshot_key {
+            screenshot_url = r2.generate_presigned_url(key, Duration::from_secs(3600)).await.ok();
+        }
+        if let Some(key) = &report.log_key {
+            log_url = r2.generate_presigned_url(key, Duration::from_secs(3600)).await.ok();
+        }
+        dtos.push(BugReportDto {
+            id: report.id,
+            title: report.title,
+            app_version: report.app_version,
+            content: report.content,
+            email: report.email,
+            screenshot_filename: report.screenshot_filename,
+            screenshot_url,
+            log_filename: report.log_filename,
+            log_url,
+            created_at: report.created_at.into(),
+        });
+    }
+
+    Ok(Json(BugReportListResponse { reports: dtos }))
+}
 
 pub async fn sync_releases(
     State(state): State<AppState>,

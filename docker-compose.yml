@@ -12,6 +12,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   docs-builder:
     image: ghcr.io/oakvideoeditorcommunity/oak-website-docs-builder:latest
@@ -48,6 +49,7 @@ services:
         condition: service_completed_successfully
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
 
   frontend:
     image: ghcr.io/oakvideoeditorcommunity/oak-website-frontend:latest
@@ -64,6 +66,7 @@ services:
       - backend
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
+    restart: unless-stopped
 
   # Watchtower monitors the GHCR images and recreates containers when new tags are published.
   # We use the actively maintained containrrr/watchtower image; the original v2tec/watchtower

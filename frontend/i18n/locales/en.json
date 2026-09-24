@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "Home",
+    "features": "Features",
     "download": "Download",
     "docs": "Docs"
   },
@@ -27,7 +28,10 @@
     "index": "Index",
     "notFound": "Document not found",
     "version": "Version",
-    "latest": "Latest"
+    "latest": "Latest",
+    "movedTitle": "Docs have moved",
+    "moved": "The Oak Video Editor documentation now lives on the dedicated docs site docs.oakvideoeditor.org. Redirecting you there…",
+    "movedButton": "Go to the docs site"
   },
   "hero": {
     "title": "Oak Video Editor",
@@ -50,6 +54,62 @@
     "openfx": {
       "title": "OpenFX Plugins",
       "desc": "Load OpenFX plugins to extend your creative possibilities."
+    },
+    "more": "Explore all features"
+  },
+  "featuresPage": {
+    "title": "Features in Depth",
+    "subtitle": "From cutting to grading: the core capabilities that make Oak Video Editor ready for professional workflows.",
+    "ocio": {
+      "title": "OCIO Color Grading",
+      "tagline": "Film-industry grading pipeline",
+      "desc": "OpenColorIO v2 is built in (via ocio-rs, safe Rust bindings). Load your studio's existing OCIO configs (including ACES) or apply .cube / .3dl LUT files for creative looks, with color transforms identical to Nuke, Maya, and other post-production tools.",
+      "points": [
+        "Load complete OCIO configs (including ACES) and reuse your team's grading pipeline",
+        "Apply .cube / .3dl LUT files directly",
+        "Color processors run through the whole pipeline with real-time preview"
+      ]
+    },
+    "openfx": {
+      "title": "OpenFX Plug-in Support",
+      "tagline": "A vast third-party effects ecosystem",
+      "desc": "OpenFX (OFX) is the open standard for video effects plug-ins — the same plug-in format used by DaVinci Resolve and Vegas Pro. Oak is a full OFX host: it automatically scans the standard system and user plug-in directories and loads third-party OFX plug-ins (denoise, beauty, glow and more) with no porting required.",
+      "points": [
+        "Shares its plug-in format with DaVinci Resolve / Vegas Pro",
+        "Scans the standard OFX directories (/Library/OFX/Plugins on macOS, /usr/OFX/Plugins on Linux, Common Files\\OFX\\Plugins on Windows), extensible via OFX_PLUGIN_PATH",
+        "Adjust plug-in parameters live in the inspector panel"
+      ]
+    },
+    "otio": {
+      "title": "OpenTimelineIO Import & Export",
+      "tagline": "The open timeline interchange format",
+      "desc": "OpenTimelineIO (OTIO) is an open timeline format started by Pixar and maintained by the Academy Software Foundation. Through its native oakotio engine, Oak imports and exports both .otio and .fcpxml (Final Cut Pro XML): sequences, video/audio/subtitle tracks, clips, gaps and transitions all come across — smooth project migration from other editors and editorial exchange with downstream departments.",
+      "points": [
+        "Import and export both .otio and .fcpxml",
+        "Preserves track structure, edit points and transitions",
+        "Ideal for project migration, collaboration and archiving"
+      ],
+      "note": "Note: OTIO is an interchange format focused on timeline structure; effect chains and keyframe animation do not travel with it."
+    },
+    "colorMgmt": {
+      "title": "Color Management",
+      "tagline": "End-to-end color accuracy",
+      "desc": "Full-pipeline color management from media decode through the timeline working space to monitor output. The project output space is well defined (sRGB / Rec.709, or wide-gamut P3 / BT.2020), with PQ (ST 2084) and HLG high-dynamic-range transfers. Display output follows a single-mapping rule: the OS handles the display transform on Wayland, Windows 11 ACM and macOS ColorSync, while on X11 and older Windows Oak applies the display ICC itself — accurate colors even on wide-gamut screens.",
+      "points": [
+        "HDR-ready: PQ (ST 2084) / HLG output transfers",
+        "Wide gamut: Display P3 / BT.2020 project output spaces",
+        "Automatically picks OS- or app-level display correction per platform"
+      ]
+    },
+    "tenBit": {
+      "title": "10-bit Display Output",
+      "tagline": "What you see is what you grade",
+      "desc": "Frames are processed and sent to the display at 10-bit precision (U10) end to end, rendering over a billion colors on supported GPUs and monitors. Gradients stay smooth with no banding — every step of skies and shadow detail stays visible while you grade.",
+      "points": [
+        "10-bit (U10) precision through processing and display output",
+        "Eliminates 8-bit gradient banding",
+        "More accurate HDR monitoring together with color management"
+      ]
     }
   },
   "cta": {
@@ -60,7 +120,30 @@
   "footer": {
     "tagline": "A community-maintained free video editor.",
     "links": "Links",
-    "community": "Community"
+    "community": "Community",
+    "bugReport": "Report a Bug"
+  },
+  "bugReport": {
+    "title": "Report a Bug",
+    "subtitle": "Ran into a problem? Tell us and help us improve Oak Video Editor.",
+    "form": {
+      "title": "Title",
+      "version": "Version",
+      "versionPlaceholder": "e.g. v0.4.2-alpha",
+      "content": "Description",
+      "contentPlaceholder": "Describe what happened and the steps to reproduce it…",
+      "email": "Contact email (optional)",
+      "emailHint": "May be used to contact you for details about this report.",
+      "screenshot": "Screenshot (optional)",
+      "log": "Log file (optional)",
+      "logHint": "If available, please attach the log file.",
+      "submit": "Submit Report",
+      "submitting": "Submitting…"
+    },
+    "success": "Thank you! Your report has been submitted.",
+    "successHint": "We read every report; if you left an email, we may reach out for details.",
+    "another": "Submit another",
+    "error": "Submission failed. Please try again later."
   },
   "loading": "Loading…",
   "releases": {
@@ -72,6 +155,10 @@
     "downloadTitle": "Download",
     "downloadDescription": "Download the latest version of Oak Video Editor for Windows, macOS, and Linux.",
     "docsTitle": "Documentation",
-    "docsDescription": "Oak Video Editor user manual and documentation."
+    "docsDescription": "Oak Video Editor user manual and documentation.",
+    "featuresTitle": "Features",
+    "featuresDescription": "Oak Video Editor features in depth: OCIO color grading, OpenFX plug-ins, OpenTimelineIO import & export, end-to-end color management, and 10-bit display output.",
+    "bugReportTitle": "Report a Bug",
+    "bugReportDescription": "Report a problem you ran into while using Oak Video Editor."
   }
 }

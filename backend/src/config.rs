@@ -15,6 +15,11 @@ pub struct ServerConfig {
     pub host: String,
     /// Port to listen on.
     pub port: u16,
+    /// Public base URL of this backend (e.g. https://www.oakvideoeditor.org).
+    /// Used to build absolute links in outgoing emails; optional because the
+    /// site itself only ever talks to the API via same-origin paths.
+    #[serde(default)]
+    pub public_url: Option<String>,
 }
 
 /// GitHub API configuration for fetching releases.
@@ -59,6 +64,32 @@ pub struct AdminConfig {
     pub token: String,
 }
 
+/// Outgoing mail settings for bug-report notifications. Entirely optional:
+/// without a host the backend stores reports but skips sending email.
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct SmtpConfig {
+    /// SMTP server hostname (e.g. smtp.example.com).
+    #[serde(default)]
+    pub host: Option<String>,
+    /// SMTP port. 465 selects implicit TLS, anything else uses STARTTLS.
+    #[serde(default)]
+    pub port: Option<u16>,
+    #[serde(default)]
+    pub username: Option<String>,
+    #[serde(default)]
+    pub password: Option<String>,
+    /// From address, e.g. "Oak Website <noreply@oakvideoeditor.org>".
+    #[serde(default)]
+    pub from: Option<String>,
+    /// Where bug reports are mailed to.
+    #[serde(default = "default_report_recipient")]
+    pub report_recipient: String,
+}
+
+fn default_report_recipient() -> String {
+    "report@oakvideoeditor.org".to_string()
+}
+
 /// Static documentation settings.
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct DocsConfig {
@@ -86,6 +117,8 @@ pub struct AppConfig {
     pub r2: R2Config,
     pub admin: AdminConfig,
     pub docs: DocsConfig,
+    #[serde(default)]
+    pub smtp: SmtpConfig,
 }
 
 impl AppConfig {

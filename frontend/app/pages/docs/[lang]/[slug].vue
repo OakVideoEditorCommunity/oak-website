@@ -1,3 +1,3 @@
 <template>
-  <DocsPage :version="null" />
+  <DocsRedirect />
 </template>

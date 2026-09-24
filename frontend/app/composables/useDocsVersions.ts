@@ -21,12 +21,15 @@ export function useDocsVersions() {
   const { fetchApi } = useApi()
 
   // Shared key: every docs component on the page reuses one fetch.
+  // SSG: fetched in the browser at runtime, not at build time.
   const { data } = useAsyncData<DocsVersions>('docs-versions', async () => {
     try {
       return await fetchApi<DocsVersions>('/api/v1/docs/versions')
     } catch {
       return { versions: [], latest: '' }
     }
+  }, {
+    server: false,
   })
 
   const versions = computed(() => data.value?.versions ?? [])

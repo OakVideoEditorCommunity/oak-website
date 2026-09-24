@@ -1,7 +1,10 @@
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 
 use crate::{
-    handlers::{docs, health, releases},
+    handlers::{bug_reports, docs, health, releases},
     state::AppState,
 };
 
@@ -12,6 +15,9 @@ pub fn router() -> Router<AppState> {
         .route("/releases/latest", get(releases::latest_release))
         .route("/releases/:id", get(releases::get_release))
         .route("/releases/:id/download", get(releases::download_release))
+        .route("/update/latest", get(releases::latest_update))
+        .route("/bug-reports", post(bug_reports::submit_bug_report))
+        .route("/bug-reports/:id/files/:kind", get(bug_reports::get_bug_report_attachment))
         .route("/docs", get(docs::list_docs))
         .route("/docs/versions", get(docs::list_versions))
         .route("/docs/:lang/:slug", get(docs::get_doc))

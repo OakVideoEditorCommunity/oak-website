@@ -10,7 +10,7 @@ use uuid::Uuid;
 use crate::{
     entities::{download_logs, release_assets, releases},
     error::{AppError, AppResult},
-    models::{DownloadQuery, ReleaseAssetDto, ReleaseDto, ReleaseListResponse},
+    models::{DownloadQuery, ReleaseAssetDto, ReleaseDto, ReleaseListResponse, UpdateInfoResponse, UpdateQuery},
     services::R2Service,
     state::AppState,
 };
@@ -75,6 +75,54 @@ pub async fn get_release(
 
     let assets = release.find_related(release_assets::Entity).all(&state.db).await?;
     Ok(Json(to_dto(release, assets)))
+}
+
+/// Auto-update check: returns the latest stable release. While the project
+/// only ships alpha builds everything is marked pre-release, so fall back to
+/// the newest pre-release rather than answering 404 — clients can decide via
+/// the `is_prerelease` flag.
+pub async fn latest_update(
+    State(state): State<AppState>,
+    Query(query): Query<UpdateQuery>,
+) -> AppResult<Json<UpdateInfoResponse>> {
+    let release = match releases::Entity::find()
+        .filter(releases::Column::IsPrerelease.eq(false))
+        .order_by_desc(releases::Column::PublishedAt)
+        .one(&state.db)
+        .await?
+    {
+        Some(release) => release,
+        None => releases::Entity::find()
+            .order_by_desc(releases::Column::PublishedAt)
+            .one(&state.db)
+            .await?
+            .ok_or_else(|| AppError::NotFound("no release found".to_string()))?,
+    };
+
+    let download_url = match query.platform {
+        Some(platform) => release
+            .find_related(release_assets::Entity)
+            .filter(release_assets::Column::SyncStatus.eq("ready"))
+            .filter(release_assets::Column::Platform.eq(platform))
+            .all(&state.db)
+            .await?
+            .into_iter()
+            .find(|a| match (&query.arch, &a.arch) {
+                (Some(wanted), arch) => arch.as_ref() == Some(wanted),
+                (None, _) => true,
+            })
+            .map(|a| format!("/api/v1/releases/{}/download?asset_id={}", release.id, a.id)),
+        None => None,
+    };
+
+    Ok(Json(UpdateInfoResponse {
+        version: release.version,
+        tag_name: release.tag_name,
+        notes: release.release_notes,
+        is_prerelease: release.is_prerelease,
+        published_at: release.published_at.map(|d| d.into()),
+        download_url,
+    }))
 }
 
 pub async fn download_release(

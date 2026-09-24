@@ -1,0 +1,59 @@
+# Development stack: builds the backend and frontend images from source
+# instead of pulling the GHCR releases, and drops watchtower and the
+# docs-builder (the docs now live on https://docs.oakvideoeditor.org, so the
+# frontend no longer calls the backend docs API).
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# The frontend is a static site served by nginx; /api/* is proxied to the
+# backend container via API_UPSTREAM.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: oak
+      POSTGRES_PASSWORD: oak
+      POSTGRES_DB: oak_website
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oak -d oak_website"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    env_file:
+      - .env
+    environment:
+      APP__DATABASE__URL: postgres://oak:oak@db/oak_website
+      APP__SERVER__HOST: 0.0.0.0
+      APP__SERVER__PORT: 8080
+      APP__DOCS__HTML_DIR: /data/docs-html
+    ports:
+      - "8081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the static build; the browser uses same-origin /api.
+        NUXT_PUBLIC_SITE_URL: http://localhost:3000
+    environment:
+      # Where nginx forwards /api/*; the compose DNS name of the backend.
+      API_UPSTREAM: http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata-dev:

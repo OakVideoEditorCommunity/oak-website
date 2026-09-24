@@ -25,6 +25,7 @@ async fn sync_endpoint_requires_authentication() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -48,6 +49,7 @@ async fn sync_endpoint_requires_authentication() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db, config).await;
@@ -117,6 +119,7 @@ async fn sync_endpoint_syncs_release_and_asset() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -140,6 +143,7 @@ async fn sync_endpoint_syncs_release_and_asset() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db, config).await;
@@ -202,6 +206,7 @@ async fn sync_endpoint_filters_by_tag() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -225,6 +230,7 @@ async fn sync_endpoint_filters_by_tag() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db, config).await;
@@ -298,6 +304,7 @@ async fn sync_endpoint_is_idempotent() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -321,6 +328,7 @@ async fn sync_endpoint_is_idempotent() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db, config).await;
@@ -409,6 +417,7 @@ async fn sync_endpoint_skips_debug_packages() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -432,6 +441,7 @@ async fn sync_endpoint_skips_debug_packages() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db.clone(), config).await;
@@ -517,6 +527,7 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -540,6 +551,7 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db.clone(), config).await;
@@ -658,6 +670,7 @@ async fn sync_endpoint_retries_asset_stuck_in_syncing() {
         server: ServerConfig {
             host: "127.0.0.1".to_string(),
             port: 0,
+            public_url: None,
         },
         github: GithubConfig {
             owner: "OakVideoEditorCommunity".to_string(),
@@ -681,6 +694,7 @@ async fn sync_endpoint_retries_asset_stuck_in_syncing() {
             git_url: None,
             update_interval_hours: 24,
         },
+    smtp: Default::default(),
     };
 
     let app = build_test_app_with_config(db.clone(), config).await;
