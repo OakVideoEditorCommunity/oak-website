@@ -147,8 +147,13 @@ impl DocsIndex {
 
     /// Sorts summaries according to the language-specific toc.json if present.
     fn sort_by_toc(lang_dir: &Path, summaries: &mut Vec<DocPageSummary>) {
+        // Without a usable toc.json the pages fall back to alphabetical order:
+        // directory iteration order is filesystem-dependent.
+        let alphabetical = |s: &mut Vec<DocPageSummary>| s.sort_by(|a, b| a.slug.cmp(&b.slug));
+
         let toc_path = lang_dir.join("toc.json");
         if !toc_path.exists() {
+            alphabetical(summaries);
             return;
         }
 
@@ -156,6 +161,7 @@ impl DocsIndex {
             Ok(raw) => raw,
             Err(e) => {
                 tracing::warn!("failed to read {}: {}", toc_path.display(), e);
+                alphabetical(summaries);
                 return;
             }
         };
@@ -164,6 +170,7 @@ impl DocsIndex {
             Ok(toc) => toc,
             Err(e) => {
                 tracing::warn!("failed to parse {}: {}", toc_path.display(), e);
+                alphabetical(summaries);
                 return;
             }
         };
