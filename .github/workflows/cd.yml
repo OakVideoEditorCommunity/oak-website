@@ -9,7 +9,6 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-backend
   FRONTEND_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-frontend
-  DOCS_BUILDER_IMAGE: ghcr.io/oakvideoeditorcommunity/oak-website-docs-builder
 
 jobs:
   build-and-push:
@@ -55,17 +54,6 @@ jobs:
             type=sha,prefix=,suffix=,format=short
             type=raw,value=latest
 
-      - name: Extract metadata for docs-builder
-        id: meta-docs-builder
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCS_BUILDER_IMAGE }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=ref,event=tag
-            type=sha,prefix=,suffix=,format=short
-            type=raw,value=latest
-
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
@@ -85,42 +73,3 @@ jobs:
           labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build and push docs-builder image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./docs-builder
-          push: true
-          tags: ${{ steps.meta-docs-builder.outputs.tags }}
-          labels: ${{ steps.meta-docs-builder.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  build-docs:
-    name: Build Documentation from GitHub
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    steps:
-      - name: Checkout oak-docs repository
-        uses: actions/checkout@v4
-        with:
-          repository: OakVideoEditorCommunity/oak-docs
-          path: oak-docs
-
-      - name: Pull docs-builder image
-        run: |
-          docker pull ${{ env.DOCS_BUILDER_IMAGE }}:${{ github.ref_name }}
-
-      - name: Build documentation
-        run: |
-          mkdir -p docs-html
-          docker run --rm \
-            -v "$PWD/oak-docs:/data/oak-docs:ro" \
-            -v "$PWD/docs-html:/data/docs-html" \
-            ${{ env.DOCS_BUILDER_IMAGE }}:${{ github.ref_name }}
-
-      - name: Upload docs artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docs-html
-          path: docs-html/

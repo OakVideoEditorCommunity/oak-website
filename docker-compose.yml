@@ -14,19 +14,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  docs-builder:
-    image: ghcr.io/oakvideoeditorcommunity/oak-website-docs-builder:latest
-    volumes:
-      - ./../oak-docs:/data/oak-docs:ro
-      - docs-html:/data/docs-html
-    environment:
-      DOCS_SRC_DIR: /data/oak-docs
-      DOCS_OUT_DIR: /data/docs-html
-      # 要托管的文档版本（文档仓库的 git tag/branch，逗号分隔，第一个为默认版本）。
-      # 留空则自动构建仓库中所有 semver tag；仓库没有 tag 时只构建一个 latest 版本。
-      DOCS_VERSIONS: ${DOCS_VERSIONS:-}
-    command: ["build-docs"]
-
   backend:
     image: ghcr.io/oakvideoeditorcommunity/oak-website-backend:latest
     env_file:
@@ -35,18 +22,11 @@ services:
       APP__DATABASE__URL: postgres://oak:oak@db/oak_website
       APP__SERVER__HOST: 0.0.0.0
       APP__SERVER__PORT: 8080
-      APP__DOCS__HTML_DIR: /data/docs-html
-      APP__DOCS__GIT_URL: https://github.com/OakVideoEditorCommunity/oak-docs.git
-      APP__DOCS__UPDATE_INTERVAL_HOURS: 24
-    volumes:
-      - docs-html:/data/docs-html:ro
     ports:
       - "8081:8080"
     depends_on:
       db:
         condition: service_healthy
-      docs-builder:
-        condition: service_completed_successfully
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
     restart: unless-stopped
@@ -85,4 +65,3 @@ services:
 
 volumes:
   pgdata:
-  docs-html:
