@@ -28,6 +28,8 @@
       </div>
     </section>
 
+    <CommunitySection />
+
     <section class="py-16 bg-gradient-to-br from-forest-900 to-forest-950 border-t border-gold-500/10">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <h2 class="text-3xl font-bold text-emerald-50 mb-4">{{ $t('cta.title') }}</h2>

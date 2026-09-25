@@ -42,3 +42,8 @@ export interface DocsVersions {
   versions: string[]
   latest: string
 }
+
+export interface DownloadStats {
+  total: number
+  per_asset: { asset_id: string; count: number }[]
+}

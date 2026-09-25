@@ -4,6 +4,9 @@
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-emerald-50 mb-4">{{ $t('download.title') }}</h1>
         <p class="text-emerald-100/60 max-w-2xl mx-auto">{{ $t('download.subtitle') }}</p>
+        <p v-if="stats" class="mt-3 text-sm text-gold-400/90">
+          {{ $t('download.totalDownloads', { n: stats.total }) }}
+        </p>
       </div>
 
       <div v-if="pending" class="text-center py-20 text-emerald-100/60">{{ $t('loading') }}</div>
@@ -26,6 +29,9 @@
                 <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageFormat(asset.filename) }}</span>
               </div>
               <div class="text-sm text-emerald-100/50">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
+              <div v-if="downloadCounts[asset.id] !== undefined" class="text-xs text-gold-400/80">
+                {{ $t('download.countLabel', { n: downloadCounts[asset.id] }) }}
+              </div>
               <DownloadButton
                 :release-id="latest.id"
                 :platform="asset.platform"
@@ -55,6 +61,7 @@
             v-for="release in allReleases.slice(1)"
             :key="release.id"
             :release="release"
+            :download-counts="downloadCounts"
           />
         </div>
       </div>
@@ -63,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Release } from '~/types'
+import type { DownloadStats, Release } from '~/types'
 
 const { fetchApi } = useApi()
 const { t } = useI18n()
@@ -74,6 +81,24 @@ const { data: allReleases, pending } = await useAsyncData<Release[]>('releases',
   return res.releases
 }, {
   server: false,
+})
+
+const { data: stats } = await useAsyncData<DownloadStats | null>('download-stats', async () => {
+  try {
+    return await fetchApi<DownloadStats>('/api/v1/stats/downloads')
+  } catch {
+    return null
+  }
+}, {
+  server: false,
+})
+
+const downloadCounts = computed<Record<string, number>>(() => {
+  const map: Record<string, number> = {}
+  for (const entry of stats.value?.per_asset ?? []) {
+    map[entry.asset_id] = entry.count
+  }
+  return map
 })
 
 const latest = computed(() => allReleases.value?.[0] || null)

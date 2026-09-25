@@ -15,6 +15,7 @@ pub fn router() -> Router<AppState> {
         .route("/releases/latest", get(releases::latest_release))
         .route("/releases/:id", get(releases::get_release))
         .route("/releases/:id/download", get(releases::download_release))
+        .route("/stats/downloads", get(releases::download_stats))
         .route("/update/latest", get(releases::latest_update))
         .route("/bug-reports", post(bug_reports::submit_bug_report))
         .route("/bug-reports/:id/files/:kind", get(bug_reports::get_bug_report_attachment))

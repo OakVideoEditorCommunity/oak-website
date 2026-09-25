@@ -11,6 +11,30 @@ use wiremock::{
 
 mod common;
 use common::{build_test_app_with_config, setup_test_db};
+
+/// Polls the sync status endpoint until the background sync finishes.
+async fn wait_for_sync(app: &axum::Router) {
+    for _ in 0..200 {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/admin/releases/sync/status")
+                    .header("authorization", "Bearer admin-token")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        if json["running"].as_bool() == Some(false) {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(25)).await;
+    }
+    panic!("sync did not finish in time");
+}
 use oak_website_backend::config::{
     AdminConfig, AppConfig, DatabaseConfig, DocsConfig, GithubConfig, R2Config, ServerConfig,
 };
@@ -55,6 +79,7 @@ async fn sync_endpoint_requires_authentication() {
     let app = build_test_app_with_config(db, config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -149,6 +174,7 @@ async fn sync_endpoint_syncs_release_and_asset() {
     let app = build_test_app_with_config(db, config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -161,10 +187,10 @@ async fn sync_endpoint_syncs_release_and_asset() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 
     // Allow the async handler to finish before checking the mock server.
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    wait_for_sync(&app).await;
     github_mock.verify().await;
     r2_mock.verify().await;
 }
@@ -236,6 +262,7 @@ async fn sync_endpoint_filters_by_tag() {
     let app = build_test_app_with_config(db, config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -248,7 +275,7 @@ async fn sync_endpoint_filters_by_tag() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 }
 
 #[tokio::test]
@@ -347,10 +374,10 @@ async fn sync_endpoint_is_idempotent() {
             )
             .await
             .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.status(), StatusCode::ACCEPTED);
+        // The next sync may only start after the previous one finished.
+        wait_for_sync(&app).await;
     }
-
-    tokio::time::sleep(Duration::from_millis(100)).await;
     github_mock.verify().await;
     r2_mock.verify().await;
 }
@@ -447,6 +474,7 @@ async fn sync_endpoint_skips_debug_packages() {
     let app = build_test_app_with_config(db.clone(), config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -459,9 +487,9 @@ async fn sync_endpoint_skips_debug_packages() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    wait_for_sync(&app).await;
     github_mock.verify().await;
     r2_mock.verify().await;
 
@@ -557,6 +585,7 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
     let app = build_test_app_with_config(db.clone(), config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -569,9 +598,9 @@ async fn sync_endpoint_marks_asset_failed_when_r2_upload_fails() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    wait_for_sync(&app).await;
     let assets = oak_website_backend::entities::release_assets::Entity::find()
         .all(&db)
         .await
@@ -700,6 +729,7 @@ async fn sync_endpoint_retries_asset_stuck_in_syncing() {
     let app = build_test_app_with_config(db.clone(), config).await;
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -712,9 +742,9 @@ async fn sync_endpoint_retries_asset_stuck_in_syncing() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
 
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    wait_for_sync(&app).await;
     github_mock.verify().await;
     r2_mock.verify().await;
 

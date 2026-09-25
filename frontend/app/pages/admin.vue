@@ -142,15 +142,31 @@ async function handleSync() {
   success.value = false
 
   try {
-    const res = await fetchApi<{ synced: number; message: string }>('/api/admin/releases/sync', {
+    // 202: the sync runs in the background (it can take minutes); poll the
+    // status endpoint until it finishes.
+    await fetchApi<{ synced: number; message: string }>('/api/admin/releases/sync', {
       method: 'POST',
       body: { tag: undefined },
       headers: {
         Authorization: `Bearer ${token.value}`,
       },
     })
-    message.value = `Synced ${res.synced} asset(s).`
-    success.value = true
+    message.value = 'Sync started in the background…'
+
+    const deadline = Date.now() + 15 * 60 * 1000
+    while (Date.now() < deadline) {
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      const status = await fetchApi<{ running: boolean; last_result: string | null }>(
+        '/api/admin/releases/sync/status',
+        { headers: { Authorization: `Bearer ${token.value}` } },
+      )
+      if (!status.running) {
+        message.value = status.last_result || 'Sync finished.'
+        success.value = !(status.last_result || '').startsWith('failed')
+        return
+      }
+    }
+    message.value = 'Sync is still running in the background; check back later.'
   } catch (e: any) {
     if (e?.status === 401) {
       message.value = 'Unauthorized: invalid admin token.'

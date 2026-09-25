@@ -20,6 +20,9 @@
           <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageFormat(asset.filename) }}</span>
         </div>
         <div class="text-xs text-emerald-100/50">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
+        <div v-if="downloadCounts?.[asset.id] !== undefined" class="text-xs text-gold-400/80">
+          {{ $t('download.countLabel', { n: downloadCounts![asset.id] }) }}
+        </div>
         <DownloadButton
           :release-id="release.id"
           :platform="asset.platform"
@@ -39,6 +42,8 @@ import type { Release } from '~/types'
 
 interface Props {
   release: Release
+  /** Per-asset download counts from /api/v1/stats/downloads (optional). */
+  downloadCounts?: Record<string, number>
 }
 
 const props = defineProps<Props>()

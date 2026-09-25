@@ -3,14 +3,14 @@ use axum::{
     response::{IntoResponse, Redirect},
     Json,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QueryOrder, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QueryOrder, QuerySelect, Set};
 use std::time::Duration;
 use uuid::Uuid;
 
 use crate::{
     entities::{download_logs, release_assets, releases},
     error::{AppError, AppResult},
-    models::{DownloadQuery, ReleaseAssetDto, ReleaseDto, ReleaseListResponse, UpdateInfoResponse, UpdateQuery},
+    models::{AssetDownloadCount, DownloadQuery, DownloadStatsResponse, ReleaseAssetDto, ReleaseDto, ReleaseListResponse, UpdateInfoResponse, UpdateQuery},
     services::R2Service,
     state::AppState,
 };
@@ -75,6 +75,27 @@ pub async fn get_release(
 
     let assets = release.find_related(release_assets::Entity).all(&state.db).await?;
     Ok(Json(to_dto(release, assets)))
+}
+
+/// Public download statistics: total downloads plus a per-asset breakdown.
+/// Counts only — the stored IPs and user agents never leave the server.
+pub async fn download_stats(State(state): State<AppState>) -> AppResult<Json<DownloadStatsResponse>> {
+    let rows: Vec<(Uuid, i64)> = download_logs::Entity::find()
+        .select_only()
+        .column(download_logs::Column::AssetId)
+        .column_as(download_logs::Column::Id.count(), "count")
+        .group_by(download_logs::Column::AssetId)
+        .into_tuple()
+        .all(&state.db)
+        .await?;
+
+    let total = rows.iter().map(|(_, count)| count).sum();
+    let per_asset = rows
+        .into_iter()
+        .map(|(asset_id, count)| AssetDownloadCount { asset_id, count })
+        .collect();
+
+    Ok(Json(DownloadStatsResponse { total, per_asset }))
 }
 
 /// Auto-update check: returns the latest stable release. While the project

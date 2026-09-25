@@ -14,7 +14,9 @@
     "download": "下载",
     "preparing": "准备下载…",
     "releaseNotes": "发布说明",
-    "noAssets": "暂无可下载版本，请稍后重试或联系管理员。"
+    "noAssets": "暂无可下载版本，请稍后重试或联系管理员。",
+    "countLabel": "下载量 {n}",
+    "totalDownloads": "累计下载 {n} 次"
   },
   "platform": {
     "windows": "Windows",
@@ -123,6 +125,26 @@
     "community": "社区",
     "bugReport": "反馈问题"
   },
+  "community": {
+    "title": "加入社区",
+    "subtitle": "选择你习惯的方式，与开发者和其他用户交流。",
+    "email": {
+      "name": "邮件列表",
+      "desc": "订阅开发动态与技术讨论"
+    },
+    "facebook": {
+      "name": "Facebook 小组",
+      "desc": "用户交流与经验分享"
+    },
+    "telegram": {
+      "name": "Telegram 群组",
+      "desc": "实时聊天与快速答疑"
+    },
+    "github": {
+      "name": "GitHub",
+      "desc": "源代码、Issue 与贡献指南"
+    }
+  },
   "bugReport": {
     "title": "反馈问题",
     "subtitle": "遇到了问题？告诉我们，帮助我们改进 Oak Video Editor。",
@@ -146,6 +168,10 @@
     "error": "提交失败，请稍后重试。"
   },
   "loading": "加载中…",
+  "notice": {
+    "alpha": "Oak Video Editor 正处于非常早期的测试阶段，欢迎试用和反馈问题，请勿用于严肃用途。",
+    "reportLink": "反馈问题"
+  },
   "releases": {
     "notFound": "版本未找到"
   },

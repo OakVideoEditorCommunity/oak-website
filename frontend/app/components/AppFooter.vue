@@ -18,6 +18,9 @@
       <div>
         <h4 class="text-emerald-50 font-semibold mb-3">{{ $t('footer.community') }}</h4>
         <ul class="space-y-2 text-sm">
+          <li><a href="mailto:dev@oakvideoeditor.org" class="hover:text-gold-300 transition">{{ $t('community.email.name') }}</a></li>
+          <li><a href="https://www.facebook.com/groups/oakvideoeditor/" target="_blank" rel="noopener" class="hover:text-gold-300 transition">Facebook</a></li>
+          <li><a href="https://t.me/oakvideoeditor" target="_blank" rel="noopener" class="hover:text-gold-300 transition">Telegram</a></li>
           <li><a href="https://github.com/OakVideoEditorCommunity/oak" target="_blank" rel="noopener" class="hover:text-gold-300 transition">GitHub</a></li>
         </ul>
       </div>

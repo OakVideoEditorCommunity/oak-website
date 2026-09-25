@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use chrono::Utc;
 use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set};
@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     entities::{bug_reports, release_assets, releases},
     error::{AppError, AppResult},
-    models::{BugReportDto, BugReportListResponse, SyncReleaseRequest, SyncResponse},
+    models::{BugReportDto, BugReportListResponse, SyncReleaseRequest, SyncResponse, SyncStatusResponse},
     services::{github::{infer_platform_arch, is_debug_package}, GithubClient, R2Service},
     state::AppState,
 };
@@ -49,10 +49,64 @@ pub async fn list_bug_reports(State(state): State<AppState>) -> AppResult<Json<B
     Ok(Json(BugReportListResponse { reports: dtos }))
 }
 
+/// Starts a release sync in the background and answers 202 immediately. A
+/// full sync downloads every asset from GitHub and uploads it to R2, which
+/// can take minutes — far longer than any proxy/gateway timeout — so the
+/// work runs as a task and progress is polled via `/releases/sync/status`.
 pub async fn sync_releases(
     State(state): State<AppState>,
     Json(req): Json<SyncReleaseRequest>,
-) -> AppResult<Json<SyncResponse>> {
+) -> AppResult<impl IntoResponse> {
+    {
+        let mut status = state
+            .sync
+            .lock()
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        if status.running {
+            return Err(AppError::BadRequest("a sync is already running".to_string()));
+        }
+        status.running = true;
+    }
+
+    let task_state = state.clone();
+    tokio::spawn(async move {
+        let result = run_sync(&task_state, req).await;
+        if let Err(e) = &result {
+            tracing::error!("release sync failed: {}", e);
+        }
+        if let Ok(mut status) = task_state.sync.lock() {
+            status.running = false;
+            status.last_finished_at = Some(Utc::now().into());
+            status.last_result = Some(match result {
+                Ok(message) => message,
+                Err(e) => format!("failed: {}", e),
+            });
+        }
+    });
+
+    Ok((
+        StatusCode::ACCEPTED,
+        Json(SyncResponse {
+            synced: 0,
+            message: "sync started in background".to_string(),
+        }),
+    ))
+}
+
+/// Reports the progress of the background release sync.
+pub async fn sync_status(State(state): State<AppState>) -> AppResult<Json<SyncStatusResponse>> {
+    let status = state
+        .sync
+        .lock()
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(Json(SyncStatusResponse {
+        running: status.running,
+        last_finished_at: status.last_finished_at,
+        last_result: status.last_result.clone(),
+    }))
+}
+
+async fn run_sync(state: &AppState, req: SyncReleaseRequest) -> AppResult<String> {
     let github = GithubClient::new(&state.config.github);
     let mut releases_list = github.fetch_releases().await?;
 
@@ -177,10 +231,7 @@ pub async fn sync_releases(
         }
     }
 
-    Ok(Json(SyncResponse {
-        synced,
-        message: format!("synced {} assets", synced),
-    }))
+    Ok(format!("synced {} assets", synced))
 }
 
 async fn sync_asset_to_r2(

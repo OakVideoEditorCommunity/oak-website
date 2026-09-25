@@ -76,6 +76,8 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
   -d '{}'
 ```
 
+调用会立即返回 `202 Accepted`，同步在后台执行（大文件较多时可能持续数分钟）；可通过 `GET /api/admin/releases/sync/status`（同样需 Bearer Token）查询进度与上次结果。
+
 后端会自动：
 
 1. 拉取 `OakVideoEditorCommunity/oak` 的 releases。
@@ -91,6 +93,7 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 - `GET /api/v1/releases` — 所有 releases
 - `GET /api/v1/releases/latest` — 最新 release
 - `GET /api/v1/releases/{id}/download?platform=&arch=` — 302 到 R2 预签名链接
+- `GET /api/v1/stats/downloads` — 下载量统计（总下载量 + 按资产计数，仅计数不含隐私信息）
 - `GET /api/v1/update/latest?platform=&arch=` — 自动更新检查：返回最新稳定版本号与更新说明（`notes`）；尚无稳定版时回退到最新预发布版（响应中 `is_prerelease` 为 `true`）；给出 `platform`（可选 `arch`）且对应资产就绪时附带站内下载地址 `download_url`（302 跳转的真实文件路径）
 - `POST /api/v1/bug-reports` — 提交 Bug 反馈（multipart 表单：`title`/`version`/`content` 必填，`email`/`screenshot`/`log` 选填；截图仅限图片、单文件最大 10MB；附件存入 R2，提交成功后邮件通知 `APP__SMTP__REPORT_RECIPIENT`，未配置 SMTP 时只入库）
 - `GET /api/v1/bug-reports/{id}/files/{screenshot|log}` — 反馈附件的永久直链（免鉴权，报告 ID 即访问凭证；访问时现场生成预签名 URL 并 302 跳转），用于邮件列表场景；需在 `APP__SERVER__PUBLIC_URL` 配置后端公网地址
@@ -99,7 +102,8 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 - `GET /api/v1/docs/versions` — 所有文档版本及默认（最新）版本
 - `GET /api/v1/docs/{lang}/{slug}` — 单篇文档 HTML（默认版本）
 - `GET /api/v1/docs/{version}/{lang}/{slug}` — 指定版本的单篇文档 HTML
-- `POST /api/admin/releases/sync` — 触发 GitHub → R2 同步
+- `POST /api/admin/releases/sync` — 触发 GitHub → R2 同步（立即返回 202，同步在后台执行；已在运行时返回 400）
+- `GET /api/admin/releases/sync/status` — 查询后台同步进度（`running` / `last_result` / `last_finished_at`）
 
 ## 文档站
 

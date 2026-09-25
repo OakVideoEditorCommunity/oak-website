@@ -35,6 +35,21 @@ pub struct ReleaseListResponse {
     pub releases: Vec<ReleaseDto>,
 }
 
+/// Download counter for a single asset.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AssetDownloadCount {
+    pub asset_id: Uuid,
+    pub count: i64,
+}
+
+/// Public download statistics: total downloads plus a per-asset breakdown.
+/// Counts only — no IPs or user agents are exposed.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DownloadStatsResponse {
+    pub total: i64,
+    pub per_asset: Vec<AssetDownloadCount>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct DownloadQuery {
     pub platform: Option<String>,
@@ -73,6 +88,14 @@ pub struct SyncReleaseRequest {
 pub struct SyncResponse {
     pub synced: usize,
     pub message: String,
+}
+
+/// Progress of the background release-sync task.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncStatusResponse {
+    pub running: bool,
+    pub last_finished_at: Option<DateTime<FixedOffset>>,
+    pub last_result: Option<String>,
 }
 
 /// Response after a successful bug-report submission.

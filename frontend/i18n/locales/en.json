@@ -14,7 +14,9 @@
     "download": "Download",
     "preparing": "Preparing download…",
     "releaseNotes": "Release Notes",
-    "noAssets": "No downloadable versions are available right now. Please check back later or contact the admin."
+    "noAssets": "No downloadable versions are available right now. Please check back later or contact the admin.",
+    "countLabel": "{n} downloads",
+    "totalDownloads": "{n} downloads so far"
   },
   "platform": {
     "windows": "Windows",
@@ -123,6 +125,26 @@
     "community": "Community",
     "bugReport": "Report a Bug"
   },
+  "community": {
+    "title": "Join the Community",
+    "subtitle": "Pick your preferred way to talk to the developers and other users.",
+    "email": {
+      "name": "Mailing List",
+      "desc": "Development updates and technical discussions"
+    },
+    "facebook": {
+      "name": "Facebook Group",
+      "desc": "User discussions and tips"
+    },
+    "telegram": {
+      "name": "Telegram Group",
+      "desc": "Real-time chat and quick answers"
+    },
+    "github": {
+      "name": "GitHub",
+      "desc": "Source code, issues, and contributing"
+    }
+  },
   "bugReport": {
     "title": "Report a Bug",
     "subtitle": "Ran into a problem? Tell us and help us improve Oak Video Editor.",
@@ -146,6 +168,10 @@
     "error": "Submission failed. Please try again later."
   },
   "loading": "Loading…",
+  "notice": {
+    "alpha": "Oak Video Editor is in a very early testing stage — you're welcome to try it and report issues, but please don't rely on it for serious work.",
+    "reportLink": "Report a bug"
+  },
   "releases": {
     "notFound": "Release not found"
   },
