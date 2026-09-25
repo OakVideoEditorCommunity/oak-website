@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <div class="bg-forest-900 rounded-2xl border border-gold-500/15 shadow-lg shadow-black/30 p-8 mt-8">
+      <div v-if="token" class="bg-forest-900 rounded-2xl border border-gold-500/15 shadow-lg shadow-black/30 p-8 mt-8">
         <h2 class="text-xl font-bold text-emerald-50 mb-2">Bug Reports</h2>
         <p class="text-emerald-100/60 mb-6">View submitted bug reports (uses the token above).</p>
 
@@ -128,6 +128,13 @@ const reports = ref<BugReport[]>([])
 const reportsLoading = ref(false)
 const reportsLoaded = ref(false)
 const reportsError = ref('')
+
+// A different token invalidates whatever the previous one loaded.
+watch(token, () => {
+  reports.value = []
+  reportsLoaded.value = false
+  reportsError.value = ''
+})
 
 async function handleSync() {
   loading.value = true

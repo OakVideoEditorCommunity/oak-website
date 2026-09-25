@@ -170,7 +170,7 @@ npm install
 npm run dev
 ```
 
-浏览器端默认使用同源相对路径请求 `/api/...`。本地开发时后端不在同源，请在 `frontend/.env` 中设置 `NUXT_PUBLIC_API_BASE_URL=http://localhost:8080`。
+浏览器端默认使用同源相对路径请求 `/api/...`。`npm run dev` 时 Nuxt 会把 `/api/**` 代理到 `http://localhost:8081`（可用 `NUXT_DEV_API_PROXY` 环境变量覆盖目标地址），无需额外配置；后端也可直接用 `docker compose -f docker-compose.dev.yml up backend` 启动。
 
 ## 部署到生产
 

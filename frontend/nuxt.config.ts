@@ -59,6 +59,15 @@ export default defineNuxtConfig({
     url: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   },
 
+  // `nuxt dev` serves no /api routes itself; forward them to a locally
+  // running backend (compose maps it to 8081) so same-origin calls work in
+  // development too. Only affects dev: the static build has no server.
+  routeRules: {
+    '/api/**': {
+      proxy: `${process.env.NUXT_DEV_API_PROXY || 'http://localhost:8081'}/api/**`,
+    },
+  },
+
   nitro: {
     prerender: {
       // The language switcher is a <select> (no crawlable <a>), and data is
