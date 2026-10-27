@@ -9,7 +9,7 @@
       {{ formatDate(release.published_at) }}
     </p>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <div
         v-for="asset in readyAssets"
         :key="asset.id"
@@ -17,9 +17,11 @@
       >
         <div class="font-medium text-emerald-100/90">
           {{ platformLabel(asset.platform) }}
-          <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageFormat(asset.filename) }}</span>
+          <span v-if="packageBadge(asset)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageBadge(asset) }}</span>
         </div>
-        <div class="text-xs text-emerald-100/50">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
+        <div class="text-xs text-emerald-100/50">
+          <template v-if="asset.arch">{{ asset.arch }} · </template>{{ formatSize(asset.size_bytes) }}
+        </div>
         <div v-if="downloadCounts?.[asset.id] !== undefined" class="text-xs text-gold-400/80">
           {{ $t('download.countLabel', { n: downloadCounts![asset.id] }) }}
         </div>
@@ -47,18 +49,19 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const { t } = useI18n()
+const { label: platformLabel, rank: platformRank } = usePlatform()
 
-const readyAssets = computed(() => props.release.assets.filter(a => a.sync_status === 'ready'))
+const readyAssets = computed(() =>
+  props.release.assets
+    .filter(a => a.sync_status === 'ready')
+    .slice()
+    .sort((a, b) => platformRank(a.platform) - platformRank(b.platform)),
+)
 
-function platformLabel(platform: string) {
-  const labels: Record<string, string> = {
-    windows: t('platform.windows'),
-    macos: t('platform.macos'),
-    linux: t('platform.linux'),
-    unknown: t('platform.unknown'),
-  }
-  return labels[platform] || platform
+function packageBadge(asset: { platform: string; filename: string }) {
+  const format = packageFormat(asset.filename)
+  // The platform label already says "AppImage"; don't repeat it.
+  return format && format.toLowerCase() !== platformLabel(asset.platform).toLowerCase() ? format : ''
 }
 
 function formatSize(bytes?: number | null) {

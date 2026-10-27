@@ -11,7 +11,7 @@ use crate::{
     entities::{download_logs, release_assets, releases},
     error::{AppError, AppResult},
     models::{AssetDownloadCount, DownloadQuery, DownloadStatsResponse, ReleaseAssetDto, ReleaseDto, ReleaseListResponse, UpdateInfoResponse, UpdateQuery},
-    services::R2Service,
+    services::{github::{platform_matches, platform_rank}, R2Service},
     state::AppState,
 };
 
@@ -121,18 +121,34 @@ pub async fn latest_update(
     };
 
     let download_url = match query.platform {
-        Some(platform) => release
-            .find_related(release_assets::Entity)
-            .filter(release_assets::Column::SyncStatus.eq("ready"))
-            .filter(release_assets::Column::Platform.eq(platform))
-            .all(&state.db)
-            .await?
-            .into_iter()
-            .find(|a| match (&query.arch, &a.arch) {
-                (Some(wanted), arch) => arch.as_ref() == Some(wanted),
-                (None, _) => true,
-            })
-            .map(|a| format!("/api/v1/releases/{}/download?asset_id={}", release.id, a.id)),
+        Some(platform) => {
+            let platform = platform.to_lowercase();
+            let mut matches: Vec<release_assets::Model> = release
+                .find_related(release_assets::Entity)
+                .filter(release_assets::Column::SyncStatus.eq("ready"))
+                .all(&state.db)
+                .await?
+                .into_iter()
+                .filter(|a| platform_matches(&platform, &a.platform))
+                .filter(|a| match (&query.arch, &a.arch) {
+                    (Some(wanted), arch) => arch.as_ref() == Some(wanted),
+                    (None, _) => true,
+                })
+                .collect();
+
+            // Exact package matches win over family aliases; when the client
+            // only asks for `linux`, prefer the most portable package.
+            matches.sort_by_key(|a| {
+                (
+                    if a.platform == platform { 0usize } else { 1usize },
+                    platform_rank(&a.platform),
+                )
+            });
+
+            matches
+                .first()
+                .map(|a| format!("/api/v1/releases/{}/download?asset_id={}", release.id, a.id))
+        }
         None => None,
     };
 
@@ -152,7 +168,10 @@ pub async fn download_release(
     Query(query): Query<DownloadQuery>,
     headers: axum::http::HeaderMap,
 ) -> AppResult<impl IntoResponse> {
-    let platform = query.platform.unwrap_or_else(|| "unknown".to_string());
+    let platform = query
+        .platform
+        .unwrap_or_else(|| "unknown".to_string())
+        .to_lowercase();
     let arch = query.arch;
 
     let assets = release_assets::Entity::find()
@@ -168,9 +187,9 @@ pub async fn download_release(
             .find(|a| a.id == asset_id)
             .ok_or_else(|| AppError::NotFound(format!("asset {} not found", asset_id)))?
     } else {
-        assets
+        let mut candidates: Vec<release_assets::Model> = assets
             .into_iter()
-            .filter(|a| a.platform == platform)
+            .filter(|a| platform_matches(&platform, &a.platform))
             .filter(|a| {
                 if let Some(ref wanted) = arch {
                     a.arch.as_ref() == Some(wanted)
@@ -178,6 +197,17 @@ pub async fn download_release(
                     true
                 }
             })
+            .collect();
+
+        candidates.sort_by_key(|a| {
+            (
+                if a.platform == platform { 0usize } else { 1usize },
+                platform_rank(&a.platform),
+            )
+        });
+
+        candidates
+            .into_iter()
             .next()
             .ok_or_else(|| AppError::NotFound(format!("no asset for platform {} arch {:?}", platform, arch)))?
     };

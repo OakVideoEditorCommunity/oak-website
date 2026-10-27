@@ -8,7 +8,7 @@
   "download": {
     "now": "Download Now",
     "title": "Download Oak Video Editor",
-    "subtitle": "Get the free non-linear video editor for Windows, macOS, and Linux.",
+    "subtitle": "Get the free non-linear video editor for Windows, macOS, and Linux (Debian / Fedora / Arch / openKylin / AppImage).",
     "latest": "Latest Release",
     "previous": "Previous Releases",
     "download": "Download",
@@ -21,6 +21,12 @@
   "platform": {
     "windows": "Windows",
     "macos": "macOS",
+    "debian": "Debian",
+    "fedora": "Fedora",
+    "arch": "Arch Linux",
+    "openkylinArm": "openKylin ARM",
+    "openkylinX86": "openKylin x86",
+    "appimage": "AppImage",
     "linux": "Linux",
     "unknown": "Other"
   },
@@ -40,7 +46,14 @@
     "subtitle": "A free, open-source, cross-platform non-linear video editor. Community-maintained for Windows, macOS, and Linux.",
     "download": "Free Download",
     "docs": "Read the Docs",
-    "platforms": "Available for Windows · macOS · Linux"
+    "platforms": "Windows · macOS · Debian · Fedora · Arch Linux · openKylin · AppImage"
+  },
+  "screenshot": {
+    "eyebrow": "Interface Preview",
+    "title": "A professional workspace built for editing",
+    "subtitle": "Multi-track timeline, source and program monitors, color tools and history panel — all in one window.",
+    "alt": "Oak Video Editor interface: project and media panel on the left, source and program monitors in the center, a multi-track timeline at the bottom, and a history panel on the right",
+    "caption": "The Oak Video Editor workspace"
   },
   "features": {
     "title": "Core Features",

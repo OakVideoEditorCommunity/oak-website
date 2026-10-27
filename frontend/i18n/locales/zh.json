@@ -8,7 +8,7 @@
   "download": {
     "now": "立即下载",
     "title": "下载 Oak Video Editor",
-    "subtitle": "获取适用于 Windows、macOS 与 Linux 的免费非线性视频编辑器。",
+    "subtitle": "获取适用于 Windows、macOS 与 Linux（Debian / Fedora / Arch / openKylin / AppImage）的免费非线性视频编辑器。",
     "latest": "最新版本",
     "previous": "历史版本",
     "download": "下载",
@@ -21,6 +21,12 @@
   "platform": {
     "windows": "Windows",
     "macos": "macOS",
+    "debian": "Debian",
+    "fedora": "Fedora",
+    "arch": "Arch Linux",
+    "openkylinArm": "openKylin ARM",
+    "openkylinX86": "openKylin x86",
+    "appimage": "AppImage",
     "linux": "Linux",
     "unknown": "其他"
   },
@@ -40,7 +46,14 @@
     "subtitle": "免费、开源、跨平台的非线性视频编辑器。由专业社区维护，面向 Windows、macOS 与 Linux。",
     "download": "免费下载",
     "docs": "阅读文档",
-    "platforms": "支持 Windows · macOS · Linux"
+    "platforms": "Windows · macOS · Debian · Fedora · Arch Linux · openKylin · AppImage"
+  },
+  "screenshot": {
+    "eyebrow": "界面预览",
+    "title": "为剪辑而生的专业工作区",
+    "subtitle": "多轨道时间线、源监视器与节目监视器、专业调色与历史记录面板，全部集中在一个窗口里。",
+    "alt": "Oak Video Editor 界面截图：左侧项目与素材面板、中间源监视器和节目监视器、底部多轨道时间线、右侧历史记录面板",
+    "caption": "Oak Video Editor 主界面"
   },
   "features": {
     "title": "核心特性",

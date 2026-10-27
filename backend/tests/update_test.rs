@@ -159,3 +159,74 @@ async fn latest_update_returns_download_url_for_ready_platform_asset() {
     assert_eq!(json["version"], "v1.0.0");
     assert!(json["download_url"].is_null());
 }
+
+#[tokio::test]
+async fn latest_update_matches_specific_platforms_and_linux_alias() {
+    let (db, _tmp) = common::setup_test_db().await;
+
+    let release = release_model("v1.0.0", false, chrono::Utc::now());
+    let release_id = release.id.clone().unwrap();
+    release.insert(&db).await.unwrap();
+
+    let assets = [
+        ("appimage", "x86_64", "oak.AppImage"),
+        ("debian", "x86_64", "oak.deb"),
+        ("openkylin-arm", "arm64", "oak-openkylin-arm64.deb"),
+        ("macos", "arm64", "oak.dmg"),
+    ];
+    let mut ids = std::collections::HashMap::new();
+    for (platform, arch, filename) in assets {
+        let id = Uuid::new_v4();
+        release_assets::ActiveModel {
+            id: Set(id),
+            release_id: Set(release_id),
+            platform: Set(platform.to_string()),
+            arch: Set(Some(arch.to_string())),
+            filename: Set(filename.to_string()),
+            github_url: Set("https://example.com".to_string()),
+            r2_key: Set(Some(format!("releases/{}/{}", release_id, filename))),
+            r2_etag: Set(None),
+            size_bytes: Set(Some(1024)),
+            sync_status: Set("ready".to_string()),
+            synced_at: Set(Some(chrono::Utc::now().into())),
+            created_at: Set(chrono::Utc::now().into()),
+            updated_at: Set(chrono::Utc::now().into()),
+        }
+        .insert(&db)
+        .await
+        .unwrap();
+        ids.insert(platform, id);
+    }
+
+    let app = common::build_test_app(db).await;
+
+    for (query, expected_platform) in [
+        ("platform=linux&arch=x86_64", "appimage"),
+        ("platform=debian&arch=x86_64", "debian"),
+        ("platform=openkylin-arm", "openkylin-arm"),
+        ("platform=macos&arch=arm64", "macos"),
+    ] {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri(format!("/api/v1/update/latest?{}", query))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(
+            json["download_url"],
+            format!(
+                "/api/v1/releases/{}/download?asset_id={}",
+                release_id, ids[expected_platform]
+            ),
+            "query: {}",
+            query
+        );
+    }
+}

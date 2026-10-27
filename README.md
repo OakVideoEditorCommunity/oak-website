@@ -80,10 +80,12 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 
 后端会自动：
 
-1. 拉取 `OakVideoEditorCommunity/oak` 的 releases。
-2. 解析每个 asset 的平台与架构。
-3. 下载 asset 并上传到 Cloudflare R2。
-4. 更新数据库中的 `sync_status` 为 `ready`。
+1. 分页拉取 `OakVideoEditorCommunity/oak` 的全部 releases。
+2. 解析每个 asset 的平台与架构，只保留 8 种面向用户的安装包：Windows、macOS、Debian、Fedora、Arch Linux、openKylin ARM、openKylin x86、AppImage（debug 符号包及其它文件会跳过）。
+3. 下载 asset 并上传到 Cloudflare R2；单个文件下载/上传失败会自动重试，避免偶发失败导致某个平台在下载页缺失。
+4. 更新数据库中的 `sync_status` 为 `ready`；已有 asset 的平台、架构、大小等元数据也会在每次同步时刷新。
+
+如果重试后仍有文件失败，`GET /api/admin/releases/sync/status` 的 `last_result` 会列出失败的文件名，重新触发一次同步即可继续重试失败项。
 
 用户点击下载按钮时，前端调用 `/api/v1/releases/{id}/download?platform=...`，后端返回 302 重定向到 R2 预签名链接。
 
@@ -92,7 +94,7 @@ curl -X POST http://localhost:8081/api/admin/releases/sync \
 - `GET /api/v1/health` — 健康检查
 - `GET /api/v1/releases` — 所有 releases
 - `GET /api/v1/releases/latest` — 最新 release
-- `GET /api/v1/releases/{id}/download?platform=&arch=` — 302 到 R2 预签名链接
+- `GET /api/v1/releases/{id}/download?platform=&arch=&asset_id=` — 302 到 R2 预签名链接（`asset_id` 优先；`platform` 支持 `windows`/`macos`/`debian`/`fedora`/`arch`/`openkylin-arm`/`openkylin-x86`/`appimage`，`linux` 可作为 Linux 系安装包的别名）
 - `GET /api/v1/stats/downloads` — 下载量统计（总下载量 + 按资产计数，仅计数不含隐私信息）
 - `GET /api/v1/update/latest?platform=&arch=` — 自动更新检查：返回最新稳定版本号与更新说明（`notes`）；尚无稳定版时回退到最新预发布版（响应中 `is_prerelease` 为 `true`）；给出 `platform`（可选 `arch`）且对应资产就绪时附带站内下载地址 `download_url`（302 跳转的真实文件路径）
 - `POST /api/v1/bug-reports` — 提交 Bug 反馈（multipart 表单：`title`/`version`/`content` 必填，`email`/`screenshot`/`log` 选填；截图仅限图片、单文件最大 10MB；附件存入 R2，提交成功后邮件通知 `APP__SMTP__REPORT_RECIPIENT`，未配置 SMTP 时只入库）

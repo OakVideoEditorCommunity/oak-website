@@ -18,7 +18,7 @@
             <span v-if="latest.is_prerelease" class="px-3 py-1 text-sm bg-gold-500/15 text-gold-300 border border-gold-500/30 rounded-full">Pre-release</span>
           </div>
 
-          <div v-if="latestReadyAssets.length" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div v-if="latestReadyAssets.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
               v-for="asset in latestReadyAssets"
               :key="asset.id"
@@ -26,9 +26,11 @@
             >
               <div class="font-semibold text-lg text-emerald-50">
                 {{ platformLabel(asset.platform) }}
-                <span v-if="packageFormat(asset.filename)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageFormat(asset.filename) }}</span>
+                <span v-if="packageBadge(asset)" class="ml-1 px-1.5 py-0.5 text-xs bg-forest-800 text-gold-300 border border-gold-500/20 rounded">{{ packageBadge(asset) }}</span>
               </div>
-              <div class="text-sm text-emerald-100/50">{{ asset.arch || 'x86_64' }} · {{ formatSize(asset.size_bytes) }}</div>
+              <div class="text-sm text-emerald-100/50">
+                <template v-if="asset.arch">{{ asset.arch }} · </template>{{ formatSize(asset.size_bytes) }}
+              </div>
               <div v-if="downloadCounts[asset.id] !== undefined" class="text-xs text-gold-400/80">
                 {{ $t('download.countLabel', { n: downloadCounts[asset.id] }) }}
               </div>
@@ -101,18 +103,21 @@ const downloadCounts = computed<Record<string, number>>(() => {
   return map
 })
 
+const { label: platformLabel, rank: platformRank } = usePlatform()
+
 const latest = computed(() => allReleases.value?.[0] || null)
-const latestReadyAssets = computed(() => latest.value?.assets.filter(a => a.sync_status === 'ready') || [])
+const latestReadyAssets = computed(() =>
+  (latest.value?.assets ?? [])
+    .filter(a => a.sync_status === 'ready')
+    .slice()
+    .sort((a, b) => platformRank(a.platform) - platformRank(b.platform)),
+)
 const renderedReleaseNotes = computed(() => latest.value?.release_notes ? renderMarkdown(latest.value.release_notes) : '')
 
-function platformLabel(platform: string) {
-  const labels: Record<string, string> = {
-    windows: t('platform.windows'),
-    macos: t('platform.macos'),
-    linux: t('platform.linux'),
-    unknown: t('platform.unknown'),
-  }
-  return labels[platform] || platform
+function packageBadge(asset: { platform: string; filename: string }) {
+  const format = packageFormat(asset.filename)
+  // The platform label already says "AppImage"; don't repeat it.
+  return format && format.toLowerCase() !== platformLabel(asset.platform).toLowerCase() ? format : ''
 }
 
 function formatSize(bytes?: number | null) {
